@@ -27,3 +27,7 @@ data/
 
 # Python build artifacts
 *.egg-info/
+
+# Personal study/defense notes — never in the submission repo
+WALKTHROUGH.md
+DECISIONS.md
