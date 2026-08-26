@@ -1,0 +1,16 @@
+# Decision log
+
+Format: `- [module] decision — reasoning — alternative considered`
+
+- [infra] Custom Postgres image extending `postgis/postgis:16-3.4` with `postgresql-16-pgvector` from PGDG — no official image ships both PostGIS and pgvector — alternative: two separate databases (rejected: cross-DB joins for parcel-scoped retrieval) or an unofficial combined image (rejected: provenance/trust).
+- [infra] Extensions created via `docker-entrypoint-initdb.d` on first boot AND re-asserted `IF NOT EXISTS` in the first Alembic migration — a fresh `make migrate` must be self-sufficient on any empty DB, not only the compose one.
+- [infra] Host port mapped `5433:5432` — avoids collision with a developer's local Postgres on 5432.
+- [schema] Chunks carry denormalized filter fields (commune_code, language, legal_status, document_date, document_type) — retrieval must filter the space *before* vector/lexical scoring (M3.1) and exclude repealed text with no join (debrief Q9) — alternative: fully normalized, join to `documents` at query time (rejected: join before the vector scan, weaker index filtering).
+- [schema] Amendment chains modeled as self-referential FKs `supersedes`/`superseded_by` on `documents` plus a `legal_status` enum — covers bonus +8 without a full version table — alternative: separate `document_versions` table (deferred: heavier than 3 weeks warrants).
+- [schema] ELI stored as nullable unique key; primary key stays a UUID — communal PDFs and geodata have no ELI, so ELI cannot be a universal PK despite the spec's suggestion — alternative: ELI-as-PK for Legilux only (rejected: mixed PK strategy across one table).
+- [ingestion] Plain typed Python scripts, not Prefect/Dagster/Celery — the corpus is a small serial batch; a scheduler adds ops surface with no payoff at this scale — alternative: Prefect (deferred to the 102-commune scale-out, noted in SCALING.md).
+- [schema] `embedding vector(1024)` pinned to a BGE-m3 / multilingual-e5-large class model — multilingual FR/DE/LB coverage, self-hostable so indexing cost is compute not per-token API (debrief Q1) — alternative: OpenAI text-embedding-3-large 3072-d (rejected: per-token cost, larger index, no LB).
+- [schema] `legal_status` includes `unknown` as the ingest-time default — honest state for freshly fetched docs whose status is not yet determined, rather than guessing in_force — alternative: default in_force (rejected: violates the no-guessing rule and risks presenting repealed text as current).
+- [schema] chunks.tsv is a stored generated tsvector using the `simple` config (no stemming) — preserves article numbers, defined terms and rare tokens, which lexical legal search depends on — alternative: per-language stemmed configs (deferred to M3 if recall needs it).
+- [infra] Alembic `include_object` ignores reflected objects absent from ORM metadata — stops autogenerate emitting DROP for PostGIS/tiger-geocoder tables the extension owns — alternative: drop tiger geocoder in init (rejected: brittle across base-image versions).
+- [infra] Enum types created once at the top of the migration with `create_type=False` on columns — types shared by documents+chunks would otherwise CREATE TYPE twice and fail — alternative: distinct per-table enum names (rejected: duplicates the vocabulary).
