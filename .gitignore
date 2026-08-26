@@ -1,0 +1,26 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+frontend/out/
+
+# Data (never commit bulk corpus / cadastre dumps)
+data/
+*.gpkg
+*.shp
+*.gml
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
