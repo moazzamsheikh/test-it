@@ -24,3 +24,6 @@ data/
 .DS_Store
 .vscode/
 .idea/
+
+# Python build artifacts
+*.egg-info/
