@@ -1,0 +1,520 @@
+﻿code_commune_cadastrale,nom_commune_cadastrale,code_commune_administrative,nom_commune_administrative,code_section,nom_section,nom_section_affiche
+001,Arsdorf,132,Rambrouch,AA,Arsdorf,AA d'Arsdorf
+001,Arsdorf,132,Rambrouch,AB,Bilsdorf,AB de Bilsdorf
+002,Asselborn,133,Wincrange,AB,Asselborn,AB d'Asselborn
+002,Asselborn,133,Wincrange,AC,Sassel,AC de Sassel
+002,Asselborn,133,Wincrange,AD,Boxhorn,AD de Boxhorn
+002,Asselborn,133,Wincrange,AE,Rumlange,AE de Rumlange
+002,Asselborn,133,Wincrange,AF,Stockem,AF de Stockem
+003,Bascharage,003,Käerjeng,BA,Linger,BA de Linger
+003,Bascharage,003,Käerjeng,BB,Hautcharage,BB de Hautcharage
+003,Bascharage,003,Käerjeng,BC,Bascharage,BC de Bascharage
+003,Bascharage,003,Käerjeng,BD,Bommelscheuer,BD de Bommelscheuer
+004,Bastendorf,135,Tandel,BA,Landscheid,BA de Landscheid
+004,Bastendorf,135,Tandel,BB,Brandenbourg-Ouest,BB de Brandenbourg-Ouest
+004,Bastendorf,135,Tandel,BC,Brandenbourg-Est,BC de Brandenbourg-Est
+004,Bastendorf,135,Tandel,BD,Bastendorf,BD de Bastendorf
+004,Bastendorf,135,Tandel,BE,Tandel,BE de Tandel
+005,Beaufort,005,Beaufort,A,Dillingen,A de Dillingen
+005,Beaufort,005,Beaufort,B,Kosselt,B de Kosselt
+005,Beaufort,005,Beaufort,C,Beaufort,C de Beaufort
+006,Bech,006,Bech,A,Geyershof,A de Geyershof
+006,Bech,006,Bech,B,Bech,B de Bech
+006,Bech,006,Bech,C,Hemstal et Zittig,C de Hemstal et Zittig
+006,Bech,006,Bech,D,Rippig,D de Rippig
+006,Bech,006,Bech,E,Hersberg et Altrier,E de Hersberg et Altrier
+006,Bech,006,Bech,F,Marscherwald,F de Marscherwald
+007,Beckerich,007,Beckerich,A,Noerdange,A de Noerdange
+007,Beckerich,007,Beckerich,B,Schweich,B de Schweich
+007,Beckerich,007,Beckerich,C,Elvange et Hovelange,C d'Elvange et Hovelange
+007,Beckerich,007,Beckerich,D,Huttange,D de Huttange
+007,Beckerich,007,Beckerich,E,Beckerich,E de Beckerich
+007,Beckerich,007,Beckerich,F,Oberpallen,F d'Oberpallen
+007,Beckerich,007,Beckerich,G,Levelange,G de Levelange
+008,Berdorf,008,Berdorf,A,Bollendorf-Pont,A de Bollendorf-Pont
+008,Berdorf,008,Berdorf,B,Berdorf,B de Berdorf
+008,Berdorf,008,Berdorf,C,Bois et Fermes,C des Bois et Fermes
+009,Berg,009,Colmar-Berg,A,Carlshof,A de Carlshof
+009,Berg,009,Colmar-Berg,B,Berg,B de Berg
+009,Berg,009,Colmar-Berg,C,Lellingerhof,C de Lellingerhof
+009,Berg,009,Colmar-Berg,D,Colmar,D de Colmar
+010,Bertrange,010,Bertrange,A,Bertrange,A de Bertrange
+010,Bertrange,010,Bertrange,B,Beaufort,B de Beaufort
+010,Bertrange,010,Bertrange,C,Lorentzscheuer,C de Lorentzscheuer
+011,Bettborn,011,Préizerdaul,A,Bettborn,A de Bettborn
+011,Bettborn,011,Préizerdaul,B,Pratz,B de Pratz
+011,Bettborn,011,Préizerdaul,C,Reimberg,C de Reimberg
+012,Bettembourg,012,Bettembourg,A,Bettembourg,A de Bettembourg
+012,Bettembourg,012,Bettembourg,B,Abweiler,B d'Abweiler
+012,Bettembourg,012,Bettembourg,C,Fennange,C de Fennange
+012,Bettembourg,012,Bettembourg,D,Huncherange,D de Huncherange
+012,Bettembourg,012,Bettembourg,E,Noertzange,E de Noertzange
+013,Bettendorf,013,Bettendorf,A,Bettendorf,A de Bettendorf
+013,Bettendorf,013,Bettendorf,B,Moestroff,B de Moestroff
+013,Bettendorf,013,Bettendorf,C,Gilsdorf,C de Gilsdorf
+014,Betzdorf,014,Betzdorf,A,Berg,A de Berg
+014,Betzdorf,014,Betzdorf,B,Betzdorf,B de Betzdorf
+014,Betzdorf,014,Betzdorf,C,Olingen,C d'Olingen
+014,Betzdorf,014,Betzdorf,D,Roodt-sur-Syre,D de Roodt-sur-Syre
+014,Betzdorf,014,Betzdorf,E,Mensdorf,E de Mensdorf
+015,Bigonville,132,Rambrouch,BA,Bigonville,BA de Bigonville
+015,Bigonville,132,Rambrouch,BB,Martelinville,BB de Martelinville
+016,Bissen,016,Bissen,A,Bissen-Nord,A de Bissen-Nord
+016,Bissen,016,Bissen,B,Bissen-Sud,B de Bissen-Sud
+017,Biwer,017,Biwer,A,Brouch,A de Brouch
+017,Biwer,017,Biwer,B,Boudler,B de Boudler
+017,Biwer,017,Biwer,C,Biwer,C de Biwer
+017,Biwer,017,Biwer,D,Wecker,D de Wecker
+017,Biwer,017,Biwer,E,Hagelsdorf,E de Hagelsdorf
+017,Biwer,017,Biwer,F,Weydig,F de Weydig
+018,Boevange(Clervaux),133,Wincrange,BA,Troine,BA de Troine
+018,Boevange(Clervaux),133,Wincrange,BB,Crendal,BB de Crendal
+018,Boevange(Clervaux),133,Wincrange,BC,Lullange,BC de Lullange
+018,Boevange(Clervaux),133,Wincrange,BD,Doennange et Deiffelt,BD de Doennange et Deiffelt
+018,Boevange(Clervaux),133,Wincrange,BE,Boevange,BE de Boevange
+018,Boevange(Clervaux),133,Wincrange,BF,Hamiville,BF de Hamiville
+018,Boevange(Clervaux),133,Wincrange,BG,Wincrange,BG de Wincrange
+019,Boevange-sur-Attert,138,Helperknapp,BA,Boevange-sur-Attert,BA de Boevange-sur-Attert
+019,Boevange-sur-Attert,138,Helperknapp,BB,Buschdorf,BB de Buschdorf
+019,Boevange-sur-Attert,138,Helperknapp,BC,Brouch,BC de Brouch
+020,Boulaide,020,Boulaide,A,Boulaide,A de Boulaide
+020,Boulaide,020,Boulaide,B,Baschleiden,B de Baschleiden
+020,Boulaide,020,Boulaide,C,Surré,C de Surré
+021,Bourscheid,021,Bourscheid,A,Schlindermanderscheid,A de Schlindermanderscheid
+021,Bourscheid,021,Bourscheid,B,Michelau,B de Michelau
+021,Bourscheid,021,Bourscheid,C,Bourscheid,C de Bourscheid
+021,Bourscheid,021,Bourscheid,D,Welscheid,D de Welscheid
+021,Bourscheid,021,Bourscheid,E,Kehmen et Scheidel,E de Kehmen et Scheidel
+021,Bourscheid,021,Bourscheid,F,Lipperscheid,F de Lipperscheid
+022,Bous,141,Bous-Waldbredimus,BA,Bous,BA de Bous
+022,Bous,141,Bous-Waldbredimus,BB,Rolling et Assel,BB de Rolling et Assel
+022,Bous,141,Bous-Waldbredimus,BC,Erpeldange,BC d'Erpeldange
+023,Burmerange,097,Schengen,BA,Elvange,BA d'Elvange
+023,Burmerange,097,Schengen,BB,Burmerange,BB de Burmerange
+023,Burmerange,097,Schengen,BC,Emerange,BC d'Emerange
+024,Clemency,003,Käerjeng,CA,Clemency,CA de Clemency
+024,Clemency,003,Käerjeng,CB,Moulins,CB des Moulins
+024,Clemency,003,Käerjeng,CC,Fingig,CC de Fingig
+025,Clervaux,025,Clervaux,CA,Clervaux,CA de Clervaux
+025,Clervaux,025,Clervaux,CB,Eselborn,CB d'Eselborn
+025,Clervaux,025,Clervaux,CC,Weicherdange,CC de Weicherdange
+025,Clervaux,025,Clervaux,CD,Reuler,CD de Reuler
+025,Clervaux,025,Clervaux,CE,Urspelt,CE d'Urspelt
+025,Clervaux,025,Clervaux,CF,Mecher,CF de Mecher
+026,Consdorf,026,Consdorf,A,Consdorf-Ouest,A de Consdorf-Ouest
+026,Consdorf,026,Consdorf,B,Scheidgen-Ouest,B de Scheidgen-Ouest
+026,Consdorf,026,Consdorf,C,Breidweiler,C de Breidweiler
+026,Consdorf,026,Consdorf,D,Marscherwald,D de Marscherwald
+026,Consdorf,026,Consdorf,E,Colbette,E de Colbette
+026,Consdorf,026,Consdorf,F,Consdorf-Est,F de Consdorf-Est
+026,Consdorf,026,Consdorf,G,Scheidgen-Est,G de Scheidgen-Est
+027,Consthum,136,Parc Hosingen,CA,Holzthum,CA de Holzthum
+027,Consthum,136,Parc Hosingen,CB,Consthum,CB de Consthum
+028,Contern,028,Contern,A,Oetrange,A d'Oetrange
+028,Contern,028,Contern,B,Moutfort et Medingen,B de Moutfort et Medingen
+028,Contern,028,Contern,C,Contern,C de Contern
+028,Contern,028,Contern,D,Muehlbach,D de Muehlbach
+028,Contern,028,Contern,E,Brücherhof,E de Brücherhof
+028,Contern,028,Contern,F,Brüchermuehle,F de Brüchermuehle
+029,Dalheim,029,Dalheim,A,Buchholz,A de Buchholz
+029,Dalheim,029,Dalheim,B,Dalheim,B de Dalheim
+029,Dalheim,029,Dalheim,C,Welfrange,C de Welfrange
+029,Dalheim,029,Dalheim,D,Filsdorf,D de Filsdorf
+030,Diekirch,030,Diekirch,A,Diekirch,A de Diekirch
+030,Diekirch,030,Diekirch,B,Iwer der Sauer,B  Iwer der Sauer
+031,Differdange,031,Differdange,A,Niedercorn,A de Niedercorn
+031,Differdange,031,Differdange,B,Differdange,B de Differdange
+031,Differdange,031,Differdange,C,Obercorn,C d'Obercorn
+032,Dippach,032,Dippach,A,Dippach,A de Dippach
+032,Dippach,032,Dippach,B,Bettange-sur-Mess,B de Bettange-sur-Mess
+032,Dippach,032,Dippach,C,Sprinkange,C de Sprinkange
+032,Dippach,032,Dippach,D,Schouweiler,D de Schouweiler
+033,Dudelange,033,Dudelange,A,Budersberg,A de Budersberg
+033,Dudelange,033,Dudelange,B,Burange,B de Burange
+033,Dudelange,033,Dudelange,C,Dudelange,C de Dudelange
+034,Echternach,034,Echternach,A,Bois,A des Bois
+034,Echternach,034,Echternach,B,Echternach,B d'Echternach
+034,Echternach,034,Echternach,C,Sainte Croix,C de la Sainte Croix
+035,Eich,075,Luxembourg,EA,Beggen,EA de Beggen
+035,Eich,075,Luxembourg,EB,Dommeldange,EB de Dommeldange
+035,Eich,075,Luxembourg,EC,Weimerskirch,EC de Weimerskirch
+035,Eich,075,Luxembourg,ED,Neudorf,ED de Neudorf
+035,Eich,075,Luxembourg,EE,Eich,EE d'Eich
+036,Ell,036,Ell,A,Roodt,A de Roodt
+036,Ell,036,Ell,B,Petit-Nobressart,B de Petit-Nobressart
+036,Ell,036,Ell,C,Colpach-Haut,C de Colpach-Haut
+036,Ell,036,Ell,D,Colpach-Bas,D de Colpach-Bas
+036,Ell,036,Ell,E,Ell,E d'Ell
+037,Ermsdorf,137,Vallée de l'Ernz,EA,Stegen,EA de Stegen
+037,Ermsdorf,137,Vallée de l'Ernz,EB,Folkendange,EB de Folkendange
+037,Ermsdorf,137,Vallée de l'Ernz,EC,Ermsdorf,EC d'Ermsdorf
+037,Ermsdorf,137,Vallée de l'Ernz,ED,Eppeldorf,ED d'Eppeldorf
+037,Ermsdorf,137,Vallée de l'Ernz,EE,Brücherhof et Moserhof,EE de Brücherhof et Moserhof
+038,Erpeldange,038,Erpeldange-sur-Sûre,A,Ingeldorf,A d'Ingeldorf
+038,Erpeldange,038,Erpeldange-sur-Sûre,B,Erpeldange,B d'Erpeldange
+038,Erpeldange,038,Erpeldange-sur-Sûre,C,Burden,C de Burden
+039,Esch-sur-Alzette,039,Esch-sur-Alzette,A,Esch-Nord,A d'Esch-Nord
+039,Esch-sur-Alzette,039,Esch-sur-Alzette,B,Lallange,B de Lallange
+039,Esch-sur-Alzette,039,Esch-sur-Alzette,C,Esch-Sud,C d'Esch-Sud
+040,Esch-sur-Sûre,040,Esch-sur-Sûre,EA,Esch-sur-Sûre,EA d'Esch-sur-Sûre
+041,Eschweiler,127,Wiltz,EA,Selscheid,EA de Selscheid
+041,Eschweiler,127,Wiltz,EB,Knaphoscheid,EB de Knaphoscheid
+041,Eschweiler,127,Wiltz,EC,Eschweiler,EC d'Eschweiler
+041,Eschweiler,127,Wiltz,ED,Erpeldange,ED d'Erpeldange
+041,Eschweiler,127,Wiltz,EE,Scharthof,EE de Scharthof
+042,Ettelbruck,042,Ettelbruck,B,Warken,B de Warken
+042,Ettelbruck,042,Ettelbruck,C,Ettelbruck,C d'Ettelbruck
+042,Ettelbruck,042,Ettelbruck,D,Grentzingen,D de Grentzingen
+043,Feulen,043,Feulen,A,Niederfeulen,A de Niederfeulen
+043,Feulen,043,Feulen,B,Oberfeulen,B d'Oberfeulen
+044,Fischbach,044,Fischbach,A,Fischbach,A de Fischbach
+044,Fischbach,044,Fischbach,B,Koedingen,B de Koedingen
+044,Fischbach,044,Fischbach,C,Weyer,C de Weyer
+044,Fischbach,044,Fischbach,D,Schoos,D de Schoos
+044,Fischbach,044,Fischbach,E,Angelsberg,E d'Angelsberg
+045,Flaxweiler,045,Flaxweiler,A,Flaxweiler,A de Flaxweiler
+045,Flaxweiler,045,Flaxweiler,B,Beyren,B de Beyren
+045,Flaxweiler,045,Flaxweiler,C,Gostingen,C de Gostingen
+045,Flaxweiler,045,Flaxweiler,D,Niederdonven,D de Niederdonven
+045,Flaxweiler,045,Flaxweiler,E,Oberdonven,E d'Oberdonven
+045,Flaxweiler,045,Flaxweiler,F,Buchholz,F de Buchholz
+046,Folschette,132,Rambrouch,FA,Schwiedelbrouch,FA de Schwiedelbrouch
+046,Folschette,132,Rambrouch,FB,Rambrouch,FB de Rambrouch
+046,Folschette,132,Rambrouch,FC,Hostert,FC de Hostert
+046,Folschette,132,Rambrouch,FD,Folschette,FD de Folschette
+046,Folschette,132,Rambrouch,FE,Eschette,FE d'Eschette
+047,Fouhren,135,Tandel,FA,Walsdorf,FA de Walsdorf
+047,Fouhren,135,Tandel,FB,Fouhren,FB de Fouhren
+047,Fouhren,135,Tandel,FC,Longsdorf,FC de Longsdorf
+047,Fouhren,135,Tandel,FD,Bettel,FD de Bettel
+048,Frisange,048,Frisange,A,Aspelt,A d'Aspelt
+048,Frisange,048,Frisange,B,Frisange,B de Frisange
+048,Frisange,048,Frisange,C,Hellange,C de Hellange
+049,Garnich,049,Garnich,A,Kahler,A de Kahler
+049,Garnich,049,Garnich,B,Garnich,B de Garnich
+049,Garnich,049,Garnich,C,Hivange,C de Hivange
+049,Garnich,049,Garnich,D,Dahlem,D de Dahlem
+050,Goesdorf,050,Goesdorf,A,Nocher,A de Nocher
+050,Goesdorf,050,Goesdorf,B,Buderscheid,B de Buderscheid
+050,Goesdorf,050,Goesdorf,C,Dahl,C de Dahl
+050,Goesdorf,050,Goesdorf,D,Masseler et Harderbach,D de Masseler et Harderbach
+050,Goesdorf,050,Goesdorf,E,Bockholtz,E de Bockholtz
+050,Goesdorf,050,Goesdorf,F,Goesdorf,F de Goesdorf
+051,Grevenmacher,051,Grevenmacher,A,Grevenmacher,A de Grevenmacher
+051,Grevenmacher,051,Grevenmacher,B,Bois,B des Bois
+052,Grosbous,142,Groussbus-Wal,GA,Grosbous,GA de Grosbous
+052,Grosbous,142,Groussbus-Wal,GB,Dellen,GB de Dellen
+053,Hachiville,133,Wincrange,HA,Hachiville,HA de Hachiville
+053,Hachiville,133,Wincrange,HB,Weiler,HB de Weiler
+053,Hachiville,133,Wincrange,HC,Hoffelt,HC de Hoffelt
+054,Hamm,075,Luxembourg,HaA,Hamm,HaA de Hamm
+054,Hamm,075,Luxembourg,HaB,Pulvermuehl,HaB de Pulvermuehl
+055,Harlange,131,Lac de la Haute-Sûre,HA,Tarchamps,HA de Tarchamps
+055,Harlange,131,Lac de la Haute-Sûre,HB,Watrange,HB de Watrange
+055,Harlange,131,Lac de la Haute-Sûre,HC,Harlange,HC de Harlange
+056,Heffingen,056,Heffingen,A,Heffingen,A de Heffingen
+056,Heffingen,056,Heffingen,B,Reuland,B de Reuland
+056,Heffingen,056,Heffingen,C,Steinborn,C de Steinborn
+056,Heffingen,056,Heffingen,D,Scheerbach,D de Scheerbach
+056,Heffingen,056,Heffingen,E,Scherfenhof,E de Scherfenhof
+057,Heiderscheid,040,Esch-sur-Sûre,HA,Tadler,HA de Tadler
+057,Heiderscheid,040,Esch-sur-Sûre,HB,Ringel,HB de Ringel
+057,Heiderscheid,040,Esch-sur-Sûre,HC,Heiderscheid,HC de Heiderscheid
+057,Heiderscheid,040,Esch-sur-Sûre,HD,Eschdorf,HD d'Eschdorf
+057,Heiderscheid,040,Esch-sur-Sûre,HE,Merscheid,HE de Merscheid
+058,Heinerscheid,025,Clervaux,HA,Lieler,HA de Lieler
+058,Heinerscheid,025,Clervaux,HB,Kalborn,HB de Kalborn
+058,Heinerscheid,025,Clervaux,HC,Heinerscheid,HC de Heinerscheid
+058,Heinerscheid,025,Clervaux,HD,Fischbach,HD de Fischbach
+058,Heinerscheid,025,Clervaux,HE,Grindhausen,HE de Grindhausen
+058,Heinerscheid,025,Clervaux,HF,Hupperdange,HF de Hupperdange
+059,Hesperange,059,Hesperange,A,Hesperange,A de Hesperange
+059,Hesperange,059,Hesperange,B,Itzig,B d'Itzig
+059,Hesperange,059,Hesperange,C,Alzingen,C d'Alzingen
+059,Hesperange,059,Hesperange,D,Fentange,D de Fentange
+060,Hobscheid,139,Habscht,HA,Hobscheid,HA de Hobscheid
+060,Hobscheid,139,Habscht,HB,Eischen,HB d'Eischen
+061,Hollerich,075,Luxembourg,HoA,Hollerich,HoA de Hollerich
+061,Hollerich,075,Luxembourg,HoB,Bonnevoie,HoB de Bonnevoie
+061,Hollerich,075,Luxembourg,HoC,Gasperich,HoC de Gasperich
+061,Hollerich,075,Luxembourg,HoD,Cessange,HoD de Cessange
+061,Hollerich,075,Luxembourg,HoE,Merl-Sud,HoE de Merl-Sud
+061,Hollerich,075,Luxembourg,HoF,Merl-Nord,HoF de Merl-Nord
+061,Hollerich,075,Luxembourg,HoG,Kockelscheuer,HoG de Kockelscheuer
+062,Hoscheid,136,Parc Hosingen,HdA,Hoscheid,HdA de Hoscheid
+062,Hoscheid,136,Parc Hosingen,HdB,Markenbach,HdB de Markenbach
+063,Hosingen,136,Parc Hosingen,HnA,Rodershausen,HnA de Rodershausen
+063,Hosingen,136,Parc Hosingen,HnB,Obereisenbach,HnB d'Obereisenbach
+063,Hosingen,136,Parc Hosingen,HnC,Untereisenbach,HnC d'Untereisenbach
+063,Hosingen,136,Parc Hosingen,HnD,Wahlhausen,HnD de Wahlhausen
+063,Hosingen,136,Parc Hosingen,HnE,Hosingen,HnE de Hosingen
+063,Hosingen,136,Parc Hosingen,HnF,Bockholtz,HnF de Bockholtz
+063,Hosingen,136,Parc Hosingen,HnG,Neidhausen,HnG de Neidhausen
+063,Hosingen,136,Parc Hosingen,HnH,Dorscheid,HnH de Dorscheid
+064,Junglinster,064,Junglinster,JA,Godbrange,JA de Godbrange
+064,Junglinster,064,Junglinster,JB,Junglinster,JB de Junglinster
+064,Junglinster,064,Junglinster,JC,Altlinster,JC d'Altlinster
+064,Junglinster,064,Junglinster,JD,Bourglinster,JD de Bourglinster
+064,Junglinster,064,Junglinster,JE,Eisenborn,JE d'Eisenborn
+064,Junglinster,064,Junglinster,JF,Imbringen,JF d'Imbringen
+065,Kautenbach,134,Kiischpelt,KA,Alscheid,KA d'Alscheid
+065,Kautenbach,134,Kiischpelt,KB,Merkholtz,KB de Merkholtz
+065,Kautenbach,134,Kiischpelt,KC,Kautenbach,KC de Kautenbach
+066,Kayl,066,Kayl,A,Kayl,A de Kayl
+066,Kayl,066,Kayl,B,Tétange,B de Tétange
+067,Kehlen,067,Kehlen,A,Kehlen,A de Kehlen
+067,Kehlen,067,Kehlen,B,Olm,B d'Olm
+067,Kehlen,067,Kehlen,C,Nospelt,C de Nospelt
+067,Kehlen,067,Kehlen,D,Dondelange,D de Dondelange
+067,Kehlen,067,Kehlen,E,Keispelt et Meispelt,E de Keispelt et Meispelt
+068,Koerich,068,Koerich,A,Koerich,A de Koerich
+068,Koerich,068,Koerich,B,Goeblange,B de Goeblange
+068,Koerich,068,Koerich,C,Goetzingen,C de Goetzingen
+069,Kopstal,069,Kopstal,A,Kopstal,A de Kopstal
+069,Kopstal,069,Kopstal,B,Bridel,B de Bridel
+070,Larochette,070,Larochette,A,Larochette,A de Larochette
+070,Larochette,070,Larochette,B,Ernzen,B d'Ernzen
+070,Larochette,070,Larochette,C,Meysembourg,C de Meysembourg
+070,Larochette,070,Larochette,D,Weydert,D de Weydert
+070,Larochette,070,Larochette,E,Leidenbach,E de Leidenbach
+071,Lenningen,071,Lenningen,A,Buurg,A de Buurg
+071,Lenningen,071,Lenningen,B,Kanecherbierg,B de Kanecherbierg
+071,Lenningen,071,Lenningen,C,Branebësch,C de Branebësch
+071,Lenningen,071,Lenningen,D,Lenningen,D de Lenningen
+071,Lenningen,071,Lenningen,E,Canach,E de Canach
+071,Lenningen,071,Lenningen,F,Fermes,F des Fermes
+072,Leudelange,072,Leudelange,A,Leudelange,A de Leudelange
+073,Lintgen,073,Lintgen,A,Lintgen,A de Lintgen
+073,Lintgen,073,Lintgen,B,Gosseldange et Prettingen,B de Gosseldange et Prettingen
+074,Lorentzweiler,074,Lorentzweiler,A,Lorentzweiler,A de Lorentzweiler
+074,Lorentzweiler,074,Lorentzweiler,B,Blaschette,B de Blaschette
+074,Lorentzweiler,074,Lorentzweiler,C,Bofferdange et Helmdange,C de Bofferdange et Helmdange
+074,Lorentzweiler,074,Lorentzweiler,D,Hunsdorf,D de Hunsdorf
+075,Luxembourg,075,Luxembourg,LA,Clausen,LA de Clausen
+075,Luxembourg,075,Luxembourg,LB,Pfaffenthal,LB de Pfaffenthal
+075,Luxembourg,075,Luxembourg,LC,Grund,LC de Grund
+075,Luxembourg,075,Luxembourg,LD,Basse Pétrusse,LD de la Basse Pétrusse
+075,Luxembourg,075,Luxembourg,LE,Limpertsberg,LE de Limpertsberg
+075,Luxembourg,075,Luxembourg,LF,Ville Haute,LF de la Ville Haute
+076,Mamer,076,Mamer,A,Mamer-Nord,A de Mamer-Nord
+076,Mamer,076,Mamer,B,Mamer-Sud,B de Mamer-Sud
+076,Mamer,076,Mamer,C,Holzem,C de Holzem
+076,Mamer,076,Mamer,D,Cap,D de Cap
+076,Mamer,076,Mamer,E,Capellen,E de Capellen
+077,Manternach,077,Manternach,A,Lellig,A de Lellig
+077,Manternach,077,Manternach,B,Manternach,B de Manternach
+077,Manternach,077,Manternach,C,Munschecker,C de Munschecker
+077,Manternach,077,Manternach,D,l'Eglise,D de l'Eglise
+077,Manternach,077,Manternach,E,Berbourg,E de Berbourg
+078,Mecher,131,Lac de la Haute-Sûre,MA,Kaundorf,MA de Kaundorf
+078,Mecher,131,Lac de la Haute-Sûre,MB,Nothum,MB de Nothum
+078,Mecher,131,Lac de la Haute-Sûre,MC,Mecher,MC de Mecher
+078,Mecher,131,Lac de la Haute-Sûre,MD,Liefrange,MD de Liefrange
+078,Mecher,131,Lac de la Haute-Sûre,ME,Bavigne,ME de Bavigne
+079,Medernach,137,Vallée de l'Ernz,MA,Medernach,MA de Medernach
+079,Medernach,137,Vallée de l'Ernz,MB,Fermes,MB des Fermes
+079,Medernach,137,Vallée de l'Ernz,MC,Savelborn,MC de Savelborn
+079,Medernach,137,Vallée de l'Ernz,MD,Pletschette,MD de Pletschette
+080,Mersch,080,Mersch,A,Essingen,A d'Essingen
+080,Mersch,080,Mersch,B,Pettingen,B de Pettingen
+080,Mersch,080,Mersch,C,Moesdorf,C de Moesdorf
+080,Mersch,080,Mersch,D,Beringen,D de Beringen
+080,Mersch,080,Mersch,E,Rollingen,E de Rollingen
+080,Mersch,080,Mersch,F,Reckange,F de Reckange
+080,Mersch,080,Mersch,G,Mersch,G de Mersch
+080,Mersch,080,Mersch,H,Schoenfels,H de Schoenfels
+081,Mertert,081,Mertert,A,Langsur,A de Langsur
+081,Mertert,081,Mertert,B,Wasserbillig,B de Wasserbillig
+081,Mertert,081,Mertert,C,Mertert,C de Mertert
+082,Mertzig,082,Mertzig,A,Mertzig,A de Mertzig
+083,Mompach,140,Rosport-Mompach,MA,Herborn,MA de Herborn
+083,Mompach,140,Rosport-Mompach,MB,Mompach,MB de Mompach
+083,Mompach,140,Rosport-Mompach,MC,Givenich,MC de Givenich
+083,Mompach,140,Rosport-Mompach,MD,Boursdorf,MD de Boursdorf
+083,Mompach,140,Rosport-Mompach,ME,Moersdorf,ME de Moersdorf
+083,Mompach,140,Rosport-Mompach,MF,Born,MF de Born
+084,Mondercange,084,Mondercange,A,Eisings,A d'Eisings
+084,Mondercange,084,Mondercange,B,Mondercange,B de Mondercange
+084,Mondercange,084,Mondercange,C,Foetz,C de Foetz
+084,Mondercange,084,Mondercange,D,Pontpierre,D de Pontpierre
+084,Mondercange,084,Mondercange,E,Bergem,E de Bergem
+085,Mondorf-les-Bains,085,Mondorf-les-Bains,A,Ellange,A d'Ellange
+085,Mondorf-les-Bains,085,Mondorf-les-Bains,B,Mondorf-les-Bains,B de Mondorf-les-Bains
+085,Mondorf-les-Bains,085,Mondorf-les-Bains,C,Altwies,C d'Altwies
+086,Munshausen,025,Clervaux,MA,Siebenaler,MA de Siebenaler
+086,Munshausen,025,Clervaux,MB,Munshausen,MB de Munshausen
+086,Munshausen,025,Clervaux,MC,Marnach,MC de Marnach
+086,Munshausen,025,Clervaux,MD,Roder,MD de Roder
+086,Munshausen,025,Clervaux,ME,Drauffelt,ME de Drauffelt
+087,Neunhausen,040,Esch-sur-Sûre,NA,Lultzhausen,NA de Lultzhausen
+087,Neunhausen,040,Esch-sur-Sûre,NB,Neunhausen,NB de Neunhausen
+087,Neunhausen,040,Esch-sur-Sûre,NC,Insenborn,NC d'Insenborn
+088,Niederanven,088,Niederanven,A,Niederanven,A de Niederanven
+088,Niederanven,088,Niederanven,B,Senningen,B de Senningen
+088,Niederanven,088,Niederanven,C,Oberanven,C d'Oberanven
+088,Niederanven,088,Niederanven,D,Ernster,D d'Ernster
+088,Niederanven,088,Niederanven,E,Gréngewald,E de Gréngewald
+089,Nommern,089,Nommern,A,Nommern,A de Nommern
+089,Nommern,089,Nommern,B,Schrondweiler,B de Schrondweiler
+089,Nommern,089,Nommern,C,Oberglabach,C d'Oberglabach
+089,Nommern,089,Nommern,D,Cruchten,D de Cruchten
+089,Nommern,089,Nommern,E,Niederglabach,E de Niederglabach
+090,Oberwampach,133,Wincrange,OA,Allerborn,OA d'Allerborn
+090,Oberwampach,133,Wincrange,OB,Brachtenbach,OB de Brachtenbach
+090,Oberwampach,133,Wincrange,OC,Derenbach,OC de Derenbach
+090,Oberwampach,133,Wincrange,OD,Oberwampach,OD d'Oberwampach
+090,Oberwampach,133,Wincrange,OE,Niederwampach,OE de Niederwampach
+091,Perlé,132,Rambrouch,PA,Holtz,PA de Holtz
+091,Perlé,132,Rambrouch,PB,Perlé,PB de Perlé
+091,Perlé,132,Rambrouch,PC,Wolwelange,PC de Wolwelange
+091,Perlé,132,Rambrouch,PD,Rombach-Martelange,PD de Rombach-Martelange
+092,Pétange,092,Pétange,A,Pétange,A de Pétange
+092,Pétange,092,Pétange,B,Lamadelaine,B de Lamadelaine
+092,Pétange,092,Pétange,C,Rodange,C de Rodange
+093,Putscheid,093,Putscheid,A,Weiler,A de Weiler
+093,Putscheid,093,Putscheid,B,Putscheid,B de Putscheid
+093,Putscheid,093,Putscheid,C,Stolzembourg,C de Stolzembourg
+093,Putscheid,093,Putscheid,D,Bivels,D de Bivels
+093,Putscheid,093,Putscheid,E,Nachtmanderscheid,E de Nachtmanderscheid
+093,Putscheid,093,Putscheid,F,Gralingen,F de Gralingen
+093,Putscheid,093,Putscheid,G,Merscheid,G de Merscheid
+094,Reckange-sur-Mess,094,Reckange-sur-Mess,A,Roedgen,A de Roedgen
+094,Reckange-sur-Mess,094,Reckange-sur-Mess,B,Reckange-sur-Mess,B de Reckange-sur-Mess
+094,Reckange-sur-Mess,094,Reckange-sur-Mess,C,Limpach,C de Limpach
+094,Reckange-sur-Mess,094,Reckange-sur-Mess,D,Pissange,D de Pissange
+094,Reckange-sur-Mess,094,Reckange-sur-Mess,E,Ehlange,E d'Ehlange
+094,Reckange-sur-Mess,094,Reckange-sur-Mess,F,Wickrange,F de Wickrange
+095,Redange/Attert,095,Redange/Attert,A,Lannen,A de Lannen
+095,Redange/Attert,095,Redange/Attert,B,Nagem,B de Nagem
+095,Redange/Attert,095,Redange/Attert,C,Ospern,C d'Ospern
+095,Redange/Attert,095,Redange/Attert,D,Redange,D de Redange
+095,Redange/Attert,095,Redange/Attert,E,Reichlange,E de Reichlange
+095,Redange/Attert,095,Redange/Attert,F,Niederpallen,F de Niederpallen
+096,Reisdorf,096,Reisdorf,A,Hoesdorf,A de Hoesdorf
+096,Reisdorf,096,Reisdorf,B,Wallendorf-Pont,B de Wallendorf-Pont
+096,Reisdorf,096,Reisdorf,C,Reisdorf,C de Reisdorf
+096,Reisdorf,096,Reisdorf,D,Bigelbach,D de Bigelbach
+097,Remerschen,097,Schengen,RA,Wintrange,RA de Wintrange
+097,Remerschen,097,Schengen,RB,Remerschen,RB de Remerschen
+097,Remerschen,097,Schengen,RC,Flouer,RC de Flouer
+097,Remerschen,097,Schengen,RD,Schengen,RD de Schengen
+098,Remich,098,Remich,A,Bois,A des Bois
+098,Remich,098,Remich,B,Remich,B de Remich
+099,Rodenbourg,064,Junglinster,RA,Rodenbourg,RA de Rodenbourg
+099,Rodenbourg,064,Junglinster,RB,Gonderange,RB de Gonderange
+099,Rodenbourg,064,Junglinster,RC,Eschweiler,RC d'Eschweiler
+099,Rodenbourg,064,Junglinster,RD,Beidweiler,RD de Beidweiler
+100,Roeser,100,Roeser,A,Bivange,A de Bivange
+100,Roeser,100,Roeser,B,Berchem,B de Berchem
+100,Roeser,100,Roeser,C,Livange,C de Livange
+100,Roeser,100,Roeser,D,Peppange,D de Peppange
+100,Roeser,100,Roeser,E,Crauthem,E de Crauthem
+100,Roeser,100,Roeser,F,Roeser,F de Roeser
+101,Rollingergrund,075,Luxembourg,RA,Rollingergrund,RA de Rollingergrund
+102,Rosport,140,Rosport-Mompach,RA,Steinheim,RA de Steinheim
+102,Rosport,140,Rosport-Mompach,RB,Rosport,RB de Rosport
+102,Rosport,140,Rosport-Mompach,RC,Hinkel,RC de Hinkel
+102,Rosport,140,Rosport-Mompach,RD,Girst,RD de Girst
+102,Rosport,140,Rosport-Mompach,RE,Dickweiler,RE de Dickweiler
+102,Rosport,140,Rosport-Mompach,RF,Osweiler-Est,RF d'Osweiler-Est
+102,Rosport,140,Rosport-Mompach,RG,Osweiler-Ouest,RG d'Osweiler-Ouest
+103,Rumelange,103,Rumelange,A,Rumelange,A de Rumelange
+104,Saeul,104,Saeul,A,Schwebach,A de Schwebach
+104,Saeul,104,Saeul,B,Kapweiler,B de Kapweiler
+104,Saeul,104,Saeul,C,Saeul,C de Saeul
+104,Saeul,104,Saeul,D,Calmus,D de Calmus
+104,Saeul,104,Saeul,E,Ehner,E d'Ehner
+105,Sandweiler,105,Sandweiler,A,Sandweiler,A de Sandweiler
+105,Sandweiler,105,Sandweiler,B,Fermes,B des Fermes
+106,Sanem,106,Sanem,A,Sanem,A de Sanem
+106,Sanem,106,Sanem,B,Soleuvre,B de Soleuvre
+106,Sanem,106,Sanem,C,Belvaux,C de Belvaux
+106,Sanem,106,Sanem,D,Ehlerange,D d'Ehlerange
+107,Schieren,107,Schieren,A,Schieren,A de Schieren
+107,Schieren,107,Schieren,B,Birtrange,B de Birtrange
+108,Schifflange,108,Schifflange,A,Schifflange,A de Schifflange
+109,Schuttrange,109,Schuttrange,A,Schuttrange,A de Schuttrange
+109,Schuttrange,109,Schuttrange,B,Munsbach,B de Munsbach
+109,Schuttrange,109,Schuttrange,C,Schrassig,C de Schrassig
+109,Schuttrange,109,Schuttrange,D,Uebersyren,D d'Uebersyren
+110,Septfontaines,139,Habscht,SA,Greisch,SA de Greisch
+110,Septfontaines,139,Habscht,SB,Roodt,SB de Roodt
+110,Septfontaines,139,Habscht,SC,Septfontaines,SC de Septfontaines
+111,Stadtbredimus,111,Stadtbredimus,A,Stadtbredimus,A de Stadtbredimus
+111,Stadtbredimus,111,Stadtbredimus,B,Greiveldange,B de Greiveldange
+112,Steinfort,112,Steinfort,A,Steinfort,A de Steinfort
+112,Steinfort,112,Steinfort,B,Hagen,B de Hagen
+112,Steinfort,112,Steinfort,C,Kleinbettingen,C de Kleinbettingen
+112,Steinfort,112,Steinfort,D,Grass,D de Grass
+113,Steinsel,113,Steinsel,A,Mullendorf,A de Mullendorf
+113,Steinsel,113,Steinsel,B,Steinsel,B de Steinsel
+113,Steinsel,113,Steinsel,C,Heisdorf,C de Heisdorf
+114,Strassen,114,Strassen,A,Strassen,A de Strassen
+114,Strassen,114,Strassen,B,Bois,B des Bois
+115,Troisvierges,115,Troisvierges,A,Hautbellain,A de Hautbellain
+115,Troisvierges,115,Troisvierges,B,Huldange,B de Huldange
+115,Troisvierges,115,Troisvierges,C,Goedange,C de Goedange
+115,Troisvierges,115,Troisvierges,D,Wilwerdange,D de Wilwerdange
+115,Troisvierges,115,Troisvierges,E,Drinklange,E de Drinklange
+115,Troisvierges,115,Troisvierges,F,Troisvierges,F de Troisvierges
+115,Troisvierges,115,Troisvierges,G,Basbellain,G de Basbellain
+115,Troisvierges,115,Troisvierges,H,Biwisch,H de Biwisch
+116,Tuntange,138,Helperknapp,TA,Tuntange,TA de Tuntange
+116,Tuntange,138,Helperknapp,TB,Hollenfels,TB de Hollenfels
+116,Tuntange,138,Helperknapp,TC,Ansembourg,TC d'Ansembourg
+116,Tuntange,138,Helperknapp,TD,Marienthal,TD de Marienthal
+116,Tuntange,138,Helperknapp,TE,Bour,TE de Bour
+117,Useldange,117,Useldange,A,Schandel,A de Schandel
+117,Useldange,117,Useldange,B,Useldange,B d'Useldange
+117,Useldange,117,Useldange,C,Rippweiler,C de Rippweiler
+117,Useldange,117,Useldange,D,Everlange,D d'Everlange
+118,Vianden,118,Vianden,A,Scheuerhof,A de Scheuerhof
+118,Vianden,118,Vianden,B,Vianden,B de Vianden
+119,Vichten,119,Vichten,A,Michelbouch,A de Michelbouch
+119,Vichten,119,Vichten,B,Vichten,B de Vichten
+120,Wahl,142,Groussbus-Wal,WA,Kuborn,WA de Kuborn
+120,Wahl,142,Groussbus-Wal,WB,Heispelt,WB de Heispelt
+120,Wahl,142,Groussbus-Wal,WC,"Grevels, Brattert et Rindschleiden","WC de Grevels, Brattert et Rindschleiden"
+120,Wahl,142,Groussbus-Wal,WD,Wahl,WD de Wahl
+120,Wahl,142,Groussbus-Wal,WE,Buschrodt,WE de Buschrodt
+121,Waldbillig,121,Waldbillig,A,Haller,A de Haller
+121,Waldbillig,121,Waldbillig,B,Waldbillig,B de Waldbillig
+121,Waldbillig,121,Waldbillig,C,Christnach,C de Christnach
+121,Waldbillig,121,Waldbillig,D,Mullerthal,D de Mullerthal
+122,Waldbredimus,141,Bous-Waldbredimus,WA,Waldbredimus,WA de Waldbredimus
+122,Waldbredimus,141,Bous-Waldbredimus,WB,Trintingerthal,WB de Trintingerthal
+123,Walferdange,123,Walferdange,A,Helmsange,A de Helmsange
+123,Walferdange,123,Walferdange,B,Walferdange,B de Walferdange
+123,Walferdange,123,Walferdange,C,Bereldange,C de Bereldange
+124,Weiler-la-Tour,124,Weiler-la-Tour,A,Syren,A de Syren
+124,Weiler-la-Tour,124,Weiler-la-Tour,B,Hassel,B de Hassel
+124,Weiler-la-Tour,124,Weiler-la-Tour,C,Weiler-la-Tour,C de Weiler-la-Tour
+125,Weiswampach,125,Weiswampach,A,Beiler,A de Beiler
+125,Weiswampach,125,Weiswampach,B,Leithum,B de Leithum
+125,Weiswampach,125,Weiswampach,C,Weiswampach,C de Weiswampach
+125,Weiswampach,125,Weiswampach,D,Breidfeld,D de Breidfeld
+125,Weiswampach,125,Weiswampach,E,Holler,E de Holler
+125,Weiswampach,125,Weiswampach,F,Binsfeld,F de Binsfeld
+126,Wellenstein,097,Schengen,WA,Kleinmacher,WA de Kleinmacher
+126,Wellenstein,097,Schengen,WB,Bech,WB de Bech
+126,Wellenstein,097,Schengen,WC,Schwebsingen,WC de Schwebsingen
+126,Wellenstein,097,Schengen,WD,Wellenstein,WD de Wellenstein
+127,Wiltz,127,Wiltz,WA,Wiltz,WA de Wiltz
+127,Wiltz,127,Wiltz,WB,Niederwiltz,WB de Niederwiltz
+127,Wiltz,127,Wiltz,WC,Roullingen,WC de Roullingen
+127,Wiltz,127,Wiltz,WD,Weidingen,WD de Weidingen
+128,Wilwerwiltz,134,Kiischpelt,WA,Enscherange,WA d'Enscherange
+128,Wilwerwiltz,134,Kiischpelt,WB,Pintsch,WB de Pintsch
+128,Wilwerwiltz,134,Kiischpelt,WC,Lellingen,WC de Lellingen
+128,Wilwerwiltz,134,Kiischpelt,WD,Wilwerwiltz,WD de Wilwerwiltz
+129,Winseler,129,Winseler,A,Grumelscheid,A de Grumelscheid
+129,Winseler,129,Winseler,B,Noertrange,B de Noertrange
+129,Winseler,129,Winseler,C,Winseler,C de Winseler
+129,Winseler,129,Winseler,D,Berlé,D de Berlé
+129,Winseler,129,Winseler,E,Doncols et Sonlez,E de Doncols et Sonlez
+130,Wormeldange,130,Wormeldange,A,Machtum,A de Machtum
+130,Wormeldange,130,Wormeldange,B,Ahn,B d'Ahn
+130,Wormeldange,130,Wormeldange,C,Wormeldange,C de Wormeldange
+130,Wormeldange,130,Wormeldange,D,Ehnen,D d'Ehnen
+130,Wormeldange,130,Wormeldange,E,Dreiborn,E de Dreiborn
+130,Wormeldange,130,Wormeldange,F,Kapenacker,F de Kapenacker

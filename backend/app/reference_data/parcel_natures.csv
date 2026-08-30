@@ -1,0 +1,51 @@
+code,label,category
+5000,rivière,Parcelle à caractère hydrographique
+5001,ruisseau,Parcelle à caractère hydrographique
+5002,canal,Parcelle à caractère hydrographique
+5003,étang,Parcelle à caractère hydrographique
+5004,zone humide,Parcelle à caractère hydrographique
+5005,bassin,Parcelle à caractère hydrographique
+5006,surface hydrographique,Parcelle à caractère hydrographique
+5007,terre labourable,Parcelle à caractère rural
+5008,pâture,Parcelle à caractère rural
+5009,pré,Parcelle à caractère rural
+5010,vaine,Parcelle à caractère rural
+5011,vigne,Parcelle à caractère rural
+5013,jardin,Parcelle à caractère zone verte
+5016,verger,Parcelle à caractère zone verte
+5017,bois,Parcelle à caractère forestier
+5018,broussailles,Parcelle à caractère forestier
+5019,haie,Parcelle à caractère forestier
+5020,plantation,Parcelle à caractère forestier
+5021,carrière,Parcelle à caractère industriel
+5022,crassier,Parcelle à caractère industriel
+5023,décharge,Parcelle à caractère industriel
+5024,place,Parcelle à caractère urbain
+5025,place (occupée),Parcelle à caractère urbain
+5026,cimetière,Parcelle à caractère urbain
+5027,parc,Parcelle à caractère zone verte
+5028,place verte,Parcelle à caractère zone verte
+5029,camping,Parcelle à caractère urbain
+5030,aire de loisirs,Parcelle à caractère zone verte
+5031,champ de tir,Parcelle à caractère urbain
+5032,piste d'essai,Parcelle à caractère urbain
+5033,terrain des sports,Parcelle à caractère zone verte
+5034,camp militaire,Parcelle à caractère urbain
+5035,autoroute,Voie de communication
+5036,route nationale,Voie de communication
+5037,chemin repris,Voie de communication
+5038,chemin d'exploitation,Voie de communication
+5039,piste cyclable,Voie de communication
+5040,sentier,Voie de communication
+5041,rue,Voie de communication
+5043,place voirie,Voie de communication
+5044,voie ferrée,Voie de communication
+5045,aéroport,Parcelle à caractère urbain
+5046,écluse,Parcelle à caractère hydrographique
+5047,port,Parcelle à caractère hydrographique
+5048,point géodésique,-
+5049,site archéologique,Parcelle à caractère urbain
+5050,rochers,Parcelle à caractère rural
+5051,nature multiple,Parcelle à nature multiple
+5052,bande écologique,Parcelle à caractère zone verte
+5053,réserve naturelle,Parcelle à caractère rural

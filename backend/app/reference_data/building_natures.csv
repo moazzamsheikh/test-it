@@ -1,0 +1,35 @@
+code,label,category
+5000,bâtiment public,bâtiment à caractère public
+5001,bâtiment à habitation,bâtiment à habitation
+5002,bât. industriel/artisanal,"bâtiment à caractère commercial, industriel ou agricole"
+5003,bâtiment commercial,"bâtiment à caractère commercial, industriel ou agricole"
+5004,bâtiment agricole,"bâtiment à caractère commercial, industriel ou agricole"
+5005,bât. remarquable/classé,bâtiment à caractère public
+5006,bâtiment religieux,bâtiment à caractère public
+5007,bâtiment à usage mixte,"bâtiment à caractère commercial, industriel ou agricole"
+5008,gare,"bâtiment à caractère commercial, industriel ou agricole"
+5009,serre,"bâtiment à caractère commercial, industriel ou agricole"
+5010,construction spéciale,"bâtiment à caractère commercial, industriel ou agricole"
+5011,monument,bâtiment à caractère public
+5012,réservoir d'hydrocarbures,"bâtiment à caractère commercial, industriel ou agricole"
+5013,ruine,bâtiment à caractère public
+5014,centre sportif,bâtiment à caractère public
+5015,poste électrique,"bâtiment à caractère commercial, industriel ou agricole"
+5016,station de pompage,"bâtiment à caractère commercial, industriel ou agricole"
+5017,château d'eau,"bâtiment à caractère commercial, industriel ou agricole"
+5018,réservoir d'eau,"bâtiment à caractère commercial, industriel ou agricole"
+5019,station d'épuration,"bâtiment à caractère commercial, industriel ou agricole"
+5020,bâtiment scolaire,bâtiment à caractère public
+5021,services de santé/sociaux,bâtiment à caractère public
+5022,centre polyvalent,bâtiment à caractère public
+5023,infrastructure ferroviaire,"bâtiment à caractère commercial, industriel ou agricole"
+5024,construction souterraine,"bâtiment à caractère commercial, industriel ou agricole"
+5025,fontaine,bâtiment à caractère public
+5026,garage,bâtiment à habitation
+5027,construction légère,"bâtiment à caractère commercial, industriel ou agricole"
+5028,partie bâtiment,bâtiment à habitation
+5029,bâtiment à appartements,bâtiment à habitation
+5030,bât. en état fut. achèvement,bâtiment à habitation
+5031,bâtiment autre,"bâtiment à caractère commercial, industriel ou agricole"
+5032,bâtiment bdtopo,bâtiment complété à partir des données topographiques
+5033,bâtiment administratif,"bâtiment à caractère commercial, industriel ou agricole"
