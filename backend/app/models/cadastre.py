@@ -80,7 +80,12 @@ class CadastralSection(Base):
     cadastral_commune_code: Mapped[str] = mapped_column(
         ForeignKey("cadastral_communes.code", ondelete="CASCADE")
     )
-    section_code: Mapped[str] = mapped_column(String(2))
+    # Verified against real data (not the 1-2 char PARCELLES.dbf sample): Luxembourg
+    # City's own crosswalk uses 3-char codes (e.g. "HaA", "HoC" for Hamm/Hollerich
+    # sub-sections). See DECISIONS.md/WALKTHROUGH.md — the raw PCN shapefile field
+    # is declared only 1 char wide, an unresolved inconsistency to verify once real
+    # Luxembourg City parcels are ingested.
+    section_code: Mapped[str] = mapped_column(String(3))
     name: Mapped[str | None] = mapped_column(Text, default=None)
 
     cadastral_commune: Mapped[CadastralCommune] = relationship(back_populates="sections")
@@ -127,7 +132,8 @@ class Parcel(Base):
     cadastral_commune_code: Mapped[str] = mapped_column(
         ForeignKey("cadastral_communes.code", ondelete="RESTRICT")
     )
-    section_code: Mapped[str] = mapped_column(String(2))
+    # Widened to 3 chars — see the matching note on CadastralSection.section_code.
+    section_code: Mapped[str] = mapped_column(String(3))
     numero_principal: Mapped[int] = mapped_column(Integer)
     numero_secondaire: Mapped[int] = mapped_column(Integer)
     lieudit: Mapped[str | None] = mapped_column(Text, default=None)
