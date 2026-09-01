@@ -4,12 +4,12 @@ Spatial + regulatory data platform for architects: given a Luxembourg cadastral
 parcel, resolve the regulations that apply to it and answer questions about it
 with citations to official sources.
 
-> **Status: M1 core is real, nothing else is built yet.** Address search and
-> parcel identification run end-to-end against real PCN + BD-Adresses data for
-> two communes (Wiltz, Luxembourg City) — schema, ingestion, API, tests, all
-> verified. The map UI (M1.1), regulatory overlays (M1.4), geometry analysis
-> (M1.5), and modules M2-M5 do not exist yet. This README describes what
-> actually runs today, not what is planned — see [Roadmap](#roadmap).
+> **Status: M1.1-M1.3 are real and working together.** Open the map, click a
+> parcel or search an address, see a real Wiltz/Luxembourg City parcel with
+> its geometry highlighted and a side panel of its addresses/buildings —
+> verified in a real browser, not just curl. Regulatory overlays (M1.4),
+> geometry analysis (M1.5), and modules M2-M5 do not exist yet. This README
+> describes what actually runs today, not what is planned — see [Roadmap](#roadmap).
 
 ---
 
@@ -18,24 +18,25 @@ with citations to official sources.
 | Capability | Status |
 |---|---|
 | PostGIS + pgvector database, one command up on a clean machine | ✅ |
-| EPSG:2169 (LUREF) ↔ WGS84 reprojection, verified correct | ✅ |
+| EPSG:2169 (LUREF) ↔ WGS84 reprojection, verified correct (backend AND frontend) | ✅ |
 | Provenance schema (sources / documents / chunks), migrated & reversible | ✅ |
 | M1 spatial schema (communes, parcels, buildings, addresses), migrated & reversible | ✅ |
 | Real PCN + BD-Adresses ingestion for Wiltz + Luxembourg City, idempotent (`make ingest`) | ✅ |
 | M1.2 address search API — trigram fuzzy match, sub-15ms warm (see below) | ✅ |
 | M1.3 parcel identify (by click, by cadastral reference) + full detail API | ✅ |
+| M1.1 map UI — Next.js + OpenLayers, 3 real switchable WMS base layers, click-to-identify, address search, side panel | ✅ |
 | 21 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
-| `mypy --strict` + ruff + black clean | ✅ |
-| M1.1 map UI, M1.4 overlays, M1.5 geometry analysis | ⛔ not started |
+| `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
+| M1.4 overlays, M1.5 geometry analysis | ⛔ not started |
 | M2 ingestion (legislation, PAG/PAP/bylaws) · M3 chatbot · M4 report/PDF · M5 procedures | ⛔ not started |
 
 ---
 
 ## Quickstart (zero to running)
 
-**Prerequisites:** Docker + Docker Compose, and Python 3.11+ (for running
+**Prerequisites:** Docker + Docker Compose, Python 3.11+ (for running
 migrations/ingestion/the API from the host — a containerised backend service
-lands later).
+lands later), and Node.js 20+ for the frontend.
 
 ```bash
 # 1. Configure environment
@@ -57,7 +58,13 @@ make migrate                    # applies Alembic migrations to head
 make ingest
 
 # 5. Run the API
-cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
+make run                        # or: cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
+
+# 6. Run the frontend (in a second terminal)
+cd frontend
+npm install
+cp .env.example .env.local      # points at http://localhost:8000 by default
+npm run dev                     # http://localhost:3000
 ```
 
 Try it against real data:
@@ -67,6 +74,11 @@ curl "http://localhost:8000/api/v1/addresses/search?q=Rue+Dominique+Lang"
 curl "http://localhost:8000/api/v1/parcels/054A00242005292"
 curl "http://localhost:8000/api/v1/parcels/identify?lon=6.173833&lat=49.619564"
 ```
+
+Or open **http://localhost:3000** — search an address or click the map. The
+map defaults to Luxembourg City; the three base layers (Topographic,
+Orthophoto, Cadastral plan) are all real WMS layers from
+`wms.geoportail.lu/opendata/service`.
 
 Run the test suite (requires `make ingest` to have run — several tests are
 real-data end-to-end checks, not fixtures):
@@ -179,14 +191,45 @@ click missed every parcel, e.g. a road) and >1 results (the click landed
 exactly on a shared boundary — a graded edge case) are both real, honest
 outcomes surfaced to the caller, not silently resolved by picking one.
 
+### M1.1 map UI
+`frontend/` — Next.js (App Router) + TypeScript strict + OpenLayers + Tailwind.
+The map's **working projection is EPSG:2169** (LUREF) itself, not Web Mercator
+— the same projection the source data and the official geoportail use, and
+the one that makes the reprojection requirement concrete rather than
+incidental. Three real WMS base layers (`Basemap`, `ortho_latest`, `PCN`) from
+`wms.geoportail.lu/opendata/service`, each verified with a live `GetMap`
+request before being wired into React. A click on the map transforms the
+LUREF click coordinate to WGS84 (`ol/proj` + `proj4`) and calls the identify
+API; the selected parcel's geometry comes back as WGS84 GeoJSON and is
+reprojected back to LUREF for the highlight overlay — the same round trip the
+backend does, independently implemented, and cross-checked against it (see
+below). Address search and parcel identify share one page's state, so
+selecting an address flies the map to it and opens the same side panel a map
+click would.
+
+Verified in an actual headless browser (Playwright + Chromium — installed for
+this; no browser-automation tool was otherwise available), not just `tsc`/
+`eslint`: zero console errors across load, click-identify, address-search-select,
+and each of the three base layers, screenshotted at every step.
+
 ### Coordinate systems
 Source geodata is **EPSG:2169** (LUREF / Luxembourg 1930 Gauss); browser/user
-input is **WGS84 (EPSG:4326)**. Reprojection is always **explicit** via PostGIS
-`ST_Transform`, never implicit — proven twice now: once via a synthetic
-round-trip (4326→2169→4326, **0.0003 m** error), and again for real via the
-identify-by-click endpoint, which takes real WGS84 coordinates and correctly
-resolves the real LUREF-stored parcel. PROJ runs offline
-(`NETWORK_ENABLED=OFF`), so transforms are deterministic.
+input is **WGS84 (EPSG:4326)**. Reprojection is always **explicit**, never
+implicit, and now proven in three independent places: a synthetic PostGIS
+round-trip (4326→2169→4326, **0.0003 m** error), the identify-by-click
+endpoint (real WGS84 coordinates correctly resolving the real LUREF-stored
+parcel), and the frontend's own `proj4`-based transform. PROJ runs offline
+(`NETWORK_ENABLED=OFF`) on the backend, so its transforms are deterministic.
+
+**The frontend transform needed its own verification, and a first attempt was
+wrong by 108 metres.** `proj4` needs the LUREF↔WGS84 datum-shift parameters
+explicitly (`towgs84=...`); a first, plausible-looking guess at those seven
+numbers put the frontend's transform 108m away from the backend's PostGIS/PROJ
+result for the same known coordinate pair. Fixed by copying PostGIS's own
+`spatial_ref_sys.proj4text` parameters verbatim — with those, `proj4` agrees
+with PostGIS to **~1.5mm**. Verified with a two-line Node script before any
+map code was written, not assumed correct because the numbers looked
+reasonable (see DECISIONS.md).
 
 ---
 
@@ -204,6 +247,9 @@ resolves the real LUREF-stored parcel. PROJ runs offline
 | Buildings: scoped delete-then-reinsert per ingest | Real source has no natural key at all to upsert against | Upsert (nothing to conflict on) |
 | Address search: trigram + abbreviation table, not aliases | Small, reviewable, real coverage gain | Full CACLR alias data (not ingested yet — real gap, logged) |
 | Identify-by-click returns a list | 0 or >1 matches are real, honest outcomes (edge cases, not errors) | Single parcel (silently wrong on a boundary click) |
+| Map's working projection is EPSG:2169, not Web Mercator | Matches source data and the official geoportail; makes reprojection concrete, not incidental | Web Mercator + reproject only at the API boundary (hides the requirement) |
+| Explicit OL `resolutions` array, not default zoom levels | OL's default zoom→resolution mapping assumes a Web-Mercator-scale world — meaningless for LUREF's small extent (verified: broke silently, see DECISIONS.md) | Default zoom levels (blank map at any "reasonable-looking" zoom number) |
+| Frontend proj4 datum params copied from PostGIS's own `spatial_ref_sys` | A first plausible guess was 108m off the backend's real transform; PostGIS's own values agree to ~1.5mm | Guessed/looked-up-elsewhere towgs84 values (unverified, silently wrong) |
 | Amendment chains as self-FKs + `legal_status` | Right-sized; enables "version in force" queries | Separate versions table (heavier) |
 | ELI nullable-unique, UUID primary key | Communal PDFs/geodata have no ELI | ELI-as-PK (mixed PK strategy) |
 | Plain typed ingestion scripts | Small serial batch corpus | Prefect/Dagster (ops overhead now) |
@@ -233,14 +279,20 @@ backend/
   ingestion/            Real PCN + BD-Adresses ingestion scripts, cache-aware downloader
   tests/                pytest: schema constraints, real-data e2e, API
   pyproject.toml        Deps + ruff/black/mypy/pytest config
+frontend/
+  app/                  Next.js App Router (page.tsx orchestrates state)
+  components/           MapView (OpenLayers), AddressSearch, ParcelPanel
+  lib/                  API client, TypeScript types, EPSG:2169 proj4 setup
 ```
 
 ---
 
 ## Current limitations (honest status)
 
-- **No map UI, no overlays, no geometry analysis (M1.1, M1.4, M1.5) yet.** Only
-  address search and parcel identify exist, and only as an API — no frontend.
+- **No regulatory overlays or geometry analysis (M1.4, M1.5) yet.** The map
+  shows three real base layers and identifies parcels; it doesn't yet show
+  PAG zoning, flood zones, Natura 2000, or any of the other overlay layers,
+  and there's no frontage/slope/setback analysis.
 - **No declared/legal area source found.** PCN's `PARCELLES` layer has no
   area field at all; `area_declared_m2` is always `null` until a source is
   found (see DECISIONS.md) — never fabricated.
@@ -268,19 +320,16 @@ backend/
 
 ## Roadmap
 
-1. **M1.1 — Map UI**: Next.js + OpenLayers, three switchable base layers
-   (`PCN`, `Ortho`, `Basemap` — real layer names from
-   `wms.geoportail.lu/opendata/service`), wired to the existing identify/search API.
-2. **M1.4 — Regulatory overlays**: enumerate real thematic WMS/WFS layer names
+1. **M1.4 — Regulatory overlays**: enumerate real thematic WMS/WFS layer names
    (PAG, Natura 2000, flood zones, etc. — not done yet), generic config-driven
    mechanism, ≥10 real layers.
-3. **M1.5 — Geometry analysis** (stretch, per the brief itself): frontage,
+2. **M1.5 — Geometry analysis** (stretch, per the brief itself): frontage,
    neighbour distances, slope from LiDAR, buildable envelope.
-4. **M2 — Ingestion & provenance**: national legislation via the Legilux SPARQL
+3. **M2 — Ingestion & provenance**: national legislation via the Legilux SPARQL
    endpoint (in-force versions only), the two communes' PAG/PAP/building bylaws,
    idempotent + incremental pipeline, status dashboard.
-5. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
-6. **M5 — Procedure assistant**: only if time remains.
+4. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
+5. **M5 — Procedure assistant**: only if time remains.
 
 Deliverables to accompany the code: `SOURCES.md`, `SCALING.md`, `EVAL.md`, and a
 weekly `PROGRESS.md`.
