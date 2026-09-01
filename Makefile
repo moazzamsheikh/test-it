@@ -1,7 +1,7 @@
 # Alix — Luxembourg Parcel Intelligence Platform
 # Interim dev targets. `make ingest` / `make demo` land with M2 and the seed set.
 
-.PHONY: db-up db-down migrate downgrade revision lint format typecheck test seed-reference
+.PHONY: db-up db-down migrate downgrade revision lint format typecheck test seed-reference ingest-parcels ingest-addresses ingest
 
 HOST_DB_URL ?= postgresql+psycopg://alix:change_me_local_only@localhost:5433/alix
 
@@ -34,3 +34,11 @@ test:  ## pytest
 
 seed-reference:  ## Load communes, cadastral crosswalk, parcel/building natures
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.seed_reference_data
+
+ingest-parcels:  ## Ingest PCN parcels + buildings for the target communes
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_parcels_buildings
+
+ingest-addresses:  ## Ingest BD-Adresses for the target communes
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_addresses
+
+ingest: seed-reference ingest-parcels ingest-addresses  ## Rebuild the full M1 corpus from scratch

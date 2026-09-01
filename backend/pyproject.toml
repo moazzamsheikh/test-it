@@ -18,6 +18,9 @@ dependencies = [
     "pgvector>=0.3.6",
     "geoalchemy2>=0.15",
     "structlog>=24.4",
+    "pyshp>=2.3",
+    "shapely>=2.0",
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
@@ -44,13 +47,24 @@ line-length = 100
 target-version = ["py311"]
 
 [tool.mypy]
-python_version = "3.11"
+# Bumped from 3.11 (our `requires-python` floor) to 3.12: numpy's own bundled
+# stubs (pulled in transitively by shapely) use 3.12+ `type` statement syntax
+# that mypy cannot even parse under an older target — this is a parser-level
+# limit, not something a per-module `ignore_errors` override can suppress.
+python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["geoalchemy2.*"]
+module = ["geoalchemy2.*", "shapefile.*", "shapely.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# shapely pulls in numpy, whose bundled stubs use 3.12+ syntax mypy can't
+# parse under python_version=3.11 — this only silences errors *within*
+# numpy's own stubs, not our code.
+module = ["numpy.*"]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

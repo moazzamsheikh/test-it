@@ -140,9 +140,12 @@ class Parcel(Base):
     nature_code: Mapped[int | None] = mapped_column(
         ForeignKey("parcel_natures.code", ondelete="SET NULL"), default=None
     )
-    # Derived via ST_Within against commune boundaries at ingest. Nullable: an
-    # unresolved parcel (boundary data not yet loaded, or a genuine edge case
-    # like a parcel straddling a commune boundary) is an honest gap.
+    # Propagated from cadastral_communes.admin_commune_code at ingest, not a
+    # live spatial join — verified against the real crosswalk that every
+    # cadastral commune's sections belong to exactly one administrative
+    # commune (no split cases), so this is a safe, exact copy, not a guess.
+    # Nullable only if the owning cadastral_communes row itself has no
+    # resolved admin code (an honest gap, not silently defaulted).
     admin_commune_code: Mapped[str | None] = mapped_column(
         ForeignKey("communes.lau2_code", ondelete="SET NULL"), default=None
     )
