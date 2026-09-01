@@ -21,16 +21,16 @@ revision:  ## Autogenerate a migration: make revision m="message"
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/alembic revision --autogenerate -m "$(m)"
 
 lint:  ## ruff + black check
-	cd backend && .venv/bin/ruff check app alembic ingestion && .venv/bin/black --check app alembic ingestion
+	cd backend && .venv/bin/ruff check app alembic ingestion tests && .venv/bin/black --check app alembic ingestion tests
 
 format:  ## ruff --fix + black write
-	cd backend && .venv/bin/ruff check app alembic ingestion --fix && .venv/bin/black app alembic ingestion
+	cd backend && .venv/bin/ruff check app alembic ingestion tests --fix && .venv/bin/black app alembic ingestion tests
 
 typecheck:  ## mypy strict on the backend package
-	cd backend && .venv/bin/mypy app ingestion
+	cd backend && .venv/bin/mypy app ingestion tests
 
-test:  ## pytest
-	cd backend && .venv/bin/pytest
+test:  ## pytest (requires `make ingest` to have run — real-data e2e tests)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/pytest -v
 
 seed-reference:  ## Load communes, cadastral crosswalk, parcel/building natures
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.seed_reference_data

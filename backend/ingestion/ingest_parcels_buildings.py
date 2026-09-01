@@ -137,6 +137,14 @@ def ingest_buildings(session: Session, shp_path: Path, cadastral_codes: set[str]
     return len(values)
 
 
+# ST_Intersects is true even for a shared-boundary touch with ~zero area —
+# verified on real data: a building "touching" 9 parcels turned out to have
+# meaningful overlap (142-420 m²) with only 3 of them, the other 6 being
+# floating-point slivers as small as 0.0000012 m². A plain `> 0` threshold
+# does not filter these out; require a small but real minimum area instead.
+_MIN_MEANINGFUL_OVERLAP_M2 = 1.0
+
+
 def link_parcel_buildings(session: Session, cadastral_codes: set[str]) -> int:
     """Populate parcel_buildings via ST_Intersects — a building can span >1 parcel."""
     result = session.execute(
@@ -146,10 +154,10 @@ def link_parcel_buildings(session: Session, cadastral_codes: set[str]) -> int:
             FROM buildings b
             JOIN parcels p ON ST_Intersects(b.geom, p.geom)
             WHERE b.cadastral_commune_code = ANY(:codes)
-              AND ST_Area(ST_Intersection(p.geom, b.geom)) > 0
+              AND ST_Area(ST_Intersection(p.geom, b.geom)) > :min_overlap
             ON CONFLICT (parcel_id, building_id) DO UPDATE SET overlap_m2 = EXCLUDED.overlap_m2
             """),
-        {"codes": list(cadastral_codes)},
+        {"codes": list(cadastral_codes), "min_overlap": _MIN_MEANINGFUL_OVERLAP_M2},
     )
     return cast(CursorResult[Any], result).rowcount
 
