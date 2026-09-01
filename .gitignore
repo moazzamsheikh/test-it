@@ -13,6 +13,8 @@ __pycache__/
 node_modules/
 .next/
 frontend/out/
+# Local Node.js binary for this dev machine, not the repo's concern
+.node-local/
 
 # Data (never commit bulk corpus / cadastre dumps)
 data/
