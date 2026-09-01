@@ -197,7 +197,18 @@ class Address(Base):
     """A BD-Adresses point, resolved onto its parcel via ST_Contains at ingest."""
 
     __tablename__ = "addresses"
-    __table_args__ = (Index("ix_addresses_admin_commune", "admin_commune_code"),)
+    __table_args__ = (
+        Index("ix_addresses_admin_commune", "admin_commune_code"),
+        # M1.2's fuzzy/typo-tolerant search depends on this — without it, the
+        # `%` similarity operator falls back to a sequential scan (caught by
+        # actually running EXPLAIN ANALYZE, not assumed from the design).
+        Index(
+            "ix_addresses_street_name_trgm",
+            "street_name_normalized",
+            postgresql_using="gin",
+            postgresql_ops={"street_name_normalized": "gin_trgm_ops"},
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     # BD-Adresses' own `id_geoportail` — the natural idempotency key.
