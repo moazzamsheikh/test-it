@@ -1,7 +1,7 @@
 # Alix — Luxembourg Parcel Intelligence Platform
-# Interim dev targets. `make ingest` / `make demo` land with M2 and the seed set.
+# Interim dev targets. A containerised backend service and `make demo` land later.
 
-.PHONY: db-up db-down migrate downgrade revision lint format typecheck test seed-reference ingest-parcels ingest-addresses ingest
+.PHONY: db-up db-down migrate downgrade revision lint format typecheck test seed-reference ingest-parcels ingest-addresses ingest run
 
 HOST_DB_URL ?= postgresql+psycopg://alix:change_me_local_only@localhost:5433/alix
 
@@ -42,3 +42,6 @@ ingest-addresses:  ## Ingest BD-Adresses for the target communes
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_addresses
 
 ingest: seed-reference ingest-parcels ingest-addresses  ## Rebuild the full M1 corpus from scratch
+
+run:  ## Run the API dev server (requires `make ingest` for real data)
+	cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
