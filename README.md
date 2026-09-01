@@ -4,10 +4,12 @@ Spatial + regulatory data platform for architects: given a Luxembourg cadastral
 parcel, resolve the regulations that apply to it and answer questions about it
 with citations to official sources.
 
-> **Status: foundation stage.** The database platform and the provenance schema
-> that every later module queries are built and verified. Modules M1–M5 are not
-> yet implemented. This README is kept honest — it describes what actually runs
-> today, not what is planned. See [Roadmap](#roadmap) for what comes next.
+> **Status: M1 core is real, nothing else is built yet.** Address search and
+> parcel identification run end-to-end against real PCN + BD-Adresses data for
+> two communes (Wiltz, Luxembourg City) — schema, ingestion, API, tests, all
+> verified. The map UI (M1.1), regulatory overlays (M1.4), geometry analysis
+> (M1.5), and modules M2-M5 do not exist yet. This README describes what
+> actually runs today, not what is planned — see [Roadmap](#roadmap).
 
 ---
 
@@ -18,16 +20,22 @@ with citations to official sources.
 | PostGIS + pgvector database, one command up on a clean machine | ✅ |
 | EPSG:2169 (LUREF) ↔ WGS84 reprojection, verified correct | ✅ |
 | Provenance schema (sources / documents / chunks), migrated & reversible | ✅ |
-| Ready for hybrid search (vector + full-text) and geospatial queries | ✅ (schema) |
+| M1 spatial schema (communes, parcels, buildings, addresses), migrated & reversible | ✅ |
+| Real PCN + BD-Adresses ingestion for Wiltz + Luxembourg City, idempotent (`make ingest`) | ✅ |
+| M1.2 address search API — trigram fuzzy match, sub-15ms warm (see below) | ✅ |
+| M1.3 parcel identify (by click, by cadastral reference) + full detail API | ✅ |
+| 21 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
 | `mypy --strict` + ruff + black clean | ✅ |
-| M1 map/cadastre/addresses · M2 ingestion · M3 chatbot · M4 report · M5 procedures | ⛔ not yet |
+| M1.1 map UI, M1.4 overlays, M1.5 geometry analysis | ⛔ not started |
+| M2 ingestion (legislation, PAG/PAP/bylaws) · M3 chatbot · M4 report/PDF · M5 procedures | ⛔ not started |
 
 ---
 
 ## Quickstart (zero to running)
 
 **Prerequisites:** Docker + Docker Compose, and Python 3.11+ (for running
-migrations from the host).
+migrations/ingestion/the API from the host — a containerised backend service
+lands later).
 
 ```bash
 # 1. Configure environment
@@ -43,17 +51,36 @@ python3 -m venv .venv
 cd ..
 make migrate                    # applies Alembic migrations to head
 
-# 4. Verify the coordinate reprojection is correct
-docker compose exec db psql -U alix -d alix -c \
-  "SELECT ST_AsText(ST_Transform(ST_SetSRID(ST_MakePoint(6.131935,49.611622),4326),2169));"
-# Expect a LUREF point near POINT(77384 75222) — the correct grid range for Lux City.
+# 4. Load the real corpus (reference data + PCN parcels/buildings + BD-Adresses,
+#    filtered to Wiltz + Luxembourg City). Downloads ~190MB once, cached under
+#    data/cache/ (gitignored); subsequent runs reuse the cache and are idempotent.
+make ingest
+
+# 5. Run the API
+cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
+```
+
+Try it against real data:
+
+```bash
+curl "http://localhost:8000/api/v1/addresses/search?q=Rue+Dominique+Lang"
+curl "http://localhost:8000/api/v1/parcels/054A00242005292"
+curl "http://localhost:8000/api/v1/parcels/identify?lon=6.173833&lat=49.619564"
+```
+
+Run the test suite (requires `make ingest` to have run — several tests are
+real-data end-to-end checks, not fixtures):
+
+```bash
+make test
 ```
 
 The database is exposed on **`localhost:5433`** (mapped from container `5432`, to
 avoid colliding with a local Postgres).
 
 Useful targets: `make lint`, `make typecheck`, `make test`, `make downgrade`,
-`make revision m="message"`.
+`make revision m="message"`, `make seed-reference`, `make ingest-parcels`,
+`make ingest-addresses`.
 
 ---
 
@@ -90,11 +117,75 @@ provenance structurally impossible to omit. Three tables
   `legal_status`, `document_date`, `document_type`) so retrieval filters the
   search space *before* scoring and excludes repealed text without a join.
 
+### M1 spatial schema
+([`backend/app/models/cadastre.py`](backend/app/models/cadastre.py)) — 9 tables:
+`communes` (administrative, LAU2-keyed), `cadastral_communes` (ACT's own,
+*different* numbering — see below), `cadastral_sections`, `parcel_natures` /
+`building_natures` (reference tables, not enums — ACT-owned open vocabularies),
+`parcels`, `buildings`, `parcel_buildings` (persisted many-to-many: a building
+can span multiple parcels, computed via `ST_Intersects` at ingest), `addresses`.
+
+**Two commune codes, on purpose.** PCN's cadastral commune numbering
+(`cadastral_commune_code`) and the LAU2 administrative code (`admin_commune_code`)
+are genuinely different systems, verified non-1:1 after historical mergers
+(cadastral communes "Arsdorf" and its former neighbour are today both sections
+inside administrative commune "Rambrouch"). Cadastral code drives the
+commune+section+number reference search; admin code drives which commune's
+regulations apply (M2/M3 scoping). Conflating them would misattribute
+regulations for any merged commune. Full reasoning in
+[DECISIONS.md](DECISIONS.md).
+
+### Real ingestion, not fixtures
+[`backend/ingestion/`](backend/ingestion/) loads the actual PCN shapefile
+(pyshp + shapely — pure Python, no GDAL, so `make ingest` needs nothing beyond
+`pip install -e .[dev]`) and BD-Adresses CSV from data.public.lu, filtered to
+Wiltz + Luxembourg City. Verified: 40,291 parcels, 28,891 buildings, 29,831
+parcel↔building links (a real multi-parcel-building minimum-overlap threshold
+was needed — see DECISIONS.md), 23,680 addresses, 99.8% resolved to a parcel.
+Both parcel/building and address ingestion are idempotent (upsert on natural
+keys; buildings have none, so they're scoped delete-then-reinsert instead —
+see DECISIONS.md) — re-running produces identical row counts, verified.
+
+### M1.2 address search
+Hybrid of three things, each covering what the others miss:
+`pg_trgm`'s `%` similarity operator (typo tolerance — "Lng" still matches
+"Lang"), a small hand-written abbreviation table applied before normalisation
+(`r.` → `rue`), and a leading-digit split so "1 Rue du Fort Thüngen" filters on
+house number 1 and fuzzy-matches the street separately. **Warm-index
+performance** (`EXPLAIN ANALYZE`, real query against the ingested corpus):
+
+```
+Bitmap Heap Scan on addresses a  (actual time=1.790..12.512 rows=30 loops=1)
+  Recheck Cond: (street_name_normalized % 'rue dominique lang'::text)
+  ->  Bitmap Index Scan on ix_addresses_street_name_trgm  (actual time=1.568..1.568 rows=2097)
+Execution Time: 12.641 ms
+```
+Comfortably under the 200ms target. This index did **not** exist on the first
+pass — the design was documented but never implemented, caught only by
+actually running `EXPLAIN ANALYZE` (110ms sequential scan before the fix). See
+DECISIONS.md.
+
+Does **not** yet solve full FR/DE/LB street-name variants — that needs CACLR's
+`ALIAS.RUE` real per-street alias data, not a synonym table, and isn't ingested
+yet (see SOURCES.md).
+
+### M1.3 parcel identify
+Three endpoints: identify-by-click (`lon`/`lat` in WGS84, transformed
+server-side to LUREF via `ST_Transform`, then `ST_Covers`), identify-by-cadastral-
+reference (commune + section + number), and full parcel detail (addresses,
+buildings with overlap area, geometry as WGS84 GeoJSON for map display).
+**Identify-by-click returns a list, not a single parcel** — 0 results (the
+click missed every parcel, e.g. a road) and >1 results (the click landed
+exactly on a shared boundary — a graded edge case) are both real, honest
+outcomes surfaced to the caller, not silently resolved by picking one.
+
 ### Coordinate systems
 Source geodata is **EPSG:2169** (LUREF / Luxembourg 1930 Gauss); browser/user
 input is **WGS84 (EPSG:4326)**. Reprojection is always **explicit** via PostGIS
-`ST_Transform`, never implicit. Verified: a Luxembourg-City point round-trips
-4326→2169→4326 with **0.0003 m** error. PROJ runs offline
+`ST_Transform`, never implicit — proven twice now: once via a synthetic
+round-trip (4326→2169→4326, **0.0003 m** error), and again for real via the
+identify-by-click endpoint, which takes real WGS84 coordinates and correctly
+resolves the real LUREF-stored parcel. PROJ runs offline
 (`NETWORK_ENABLED=OFF`), so transforms are deterministic.
 
 ---
@@ -106,6 +197,13 @@ input is **WGS84 (EPSG:4326)**. Reprojection is always **explicit** via PostGIS
 | PostgreSQL + PostGIS + pgvector (one DB) | Geo + vector + metadata filter in one query | Separate vector DB (cross-system joins) |
 | Custom PostGIS+pgvector Docker image | No official image has both | Two databases / unofficial image |
 | Denormalised filter fields on chunks | Filter before scoring; exclude repealed w/o join | Fully normalized (join before vector scan) |
+| Two commune codes on `parcels` (cadastral + LAU2 admin) | Verified non-1:1 after mergers; conflating misattributes regulations | Single code (breaks one of the two required lookups) |
+| `parcel_natures`/`building_natures` as reference tables | ACT-owned open vocabularies, carry a category grouping | Python enum (duplicates ACT's taxonomy) |
+| `parcel_buildings` persisted join, not a live query | Real BATIMENTS data has no parcel FK at all; buildings can span >1 parcel | Single nullable FK (silently wrong for the multi-parcel case) |
+| pyshp + shapely for geodata parsing | No system deps — `make ingest` stays `pip install -e .[dev]` | GDAL/ogr2ogr (outside the mandatory stack) |
+| Buildings: scoped delete-then-reinsert per ingest | Real source has no natural key at all to upsert against | Upsert (nothing to conflict on) |
+| Address search: trigram + abbreviation table, not aliases | Small, reviewable, real coverage gain | Full CACLR alias data (not ingested yet — real gap, logged) |
+| Identify-by-click returns a list | 0 or >1 matches are real, honest outcomes (edge cases, not errors) | Single parcel (silently wrong on a boundary click) |
 | Amendment chains as self-FKs + `legal_status` | Right-sized; enables "version in force" queries | Separate versions table (heavier) |
 | ELI nullable-unique, UUID primary key | Communal PDFs/geodata have no ELI | ELI-as-PK (mixed PK strategy) |
 | Plain typed ingestion scripts | Small serial batch corpus | Prefect/Dagster (ops overhead now) |
@@ -122,11 +220,18 @@ The full decision log with reasoning and rejected alternatives is in
 ```
 docker/postgres/        Custom PostGIS+pgvector image + first-boot extension SQL
 docker-compose.yml      db service (host :5433)
-Makefile                db-up, migrate, lint, typecheck, test, …
+Makefile                db-up, migrate, seed-reference, ingest, lint, test, …
+data/cache/              Bulk downloads (gitignored) — pcn-shape.zip, addresses.csv
 backend/
-  app/core/             Settings (Pydantic) + async SQLAlchemy engine
-  app/models/           ORM models: provenance schema + controlled enums
+  app/core/             Settings, async SQLAlchemy engine, structlog config
+  app/models/           ORM models: provenance schema + M1 spatial schema
+  app/schemas/          Pydantic API response models
+  app/api/v1/           FastAPI routers (addresses, parcels)
+  app/services/         Query logic behind the routers (address search, parcel lookups)
+  app/reference_data/   Small, tracked CSVs (communes, natures, cadastral crosswalk)
   alembic/              Migrations (env.py filters PostGIS-owned tables)
+  ingestion/            Real PCN + BD-Adresses ingestion scripts, cache-aware downloader
+  tests/                pytest: schema constraints, real-data e2e, API
   pyproject.toml        Deps + ruff/black/mypy/pytest config
 ```
 
@@ -134,28 +239,48 @@ backend/
 
 ## Current limitations (honest status)
 
-- **No ingestion, map, retrieval, report, or procedure logic yet.** Only the
-  database platform and provenance schema exist.
-- Migrations are run from a host virtualenv (`backend/.venv`); a containerised
-  backend service and `make ingest` / `make demo` land with M2.
-- Embedding dimension is pinned to 1024; changing the model to another dimension
-  is an explicit migration.
+- **No map UI, no overlays, no geometry analysis (M1.1, M1.4, M1.5) yet.** Only
+  address search and parcel identify exist, and only as an API — no frontend.
+- **No declared/legal area source found.** PCN's `PARCELLES` layer has no
+  area field at all; `area_declared_m2` is always `null` until a source is
+  found (see DECISIONS.md) — never fabricated.
+- **`cadastral_sections` doesn't join to `parcels.section_code`.** The
+  crosswalk it's seeded from uses a different section-naming convention
+  (administrative-commune-wide, e.g. `HoB`) than real PCN data (single letter,
+  scoped per cadastral commune) — see DECISIONS.md. Section display names
+  (e.g. "Bonnevoie") aren't wired into the API yet as a result.
+- **Address search doesn't cover FR/DE/LB street-name variants** beyond a
+  small abbreviation table — real alias data (CACLR's `ALIAS.RUE`) isn't
+  ingested yet.
+- No ingestion of legislation, PAG/PAP/bylaws, retrieval, report, or procedure
+  logic yet (M2-M5).
+- Migrations/ingestion/API are run from a host virtualenv (`backend/.venv`); a
+  containerised backend service and `make demo` (seeded small dataset) land
+  later.
+- Embedding dimension is pinned to 1024; changing the model to another
+  dimension is an explicit migration.
 - Production use of the Luxembourg geoportal (`ws.geoportail.lu`) requires ACT
-  domain approval — to be documented, not a blocker for the assessment.
+  domain approval — to be documented, not a blocker for the assessment. The
+  actually-working public endpoint we found is `wms.geoportail.lu/opendata/service`
+  (see SOURCES.md).
 
 ---
 
 ## Roadmap
 
-1. **M1 — Map, cadastre, addresses**: spatial schema (parcels in EPSG:2169,
-   addresses with trigram/unaccent fuzzy search, a generic config-driven overlay
-   table), ingest real PCN + BD-Adresses for two contrasting communes
-   (Luxembourg City + Wiltz), parcel identification, regulatory overlays.
-2. **M2 — Ingestion & provenance**: national legislation via the Legilux SPARQL
+1. **M1.1 — Map UI**: Next.js + OpenLayers, three switchable base layers
+   (`PCN`, `Ortho`, `Basemap` — real layer names from
+   `wms.geoportail.lu/opendata/service`), wired to the existing identify/search API.
+2. **M1.4 — Regulatory overlays**: enumerate real thematic WMS/WFS layer names
+   (PAG, Natura 2000, flood zones, etc. — not done yet), generic config-driven
+   mechanism, ≥10 real layers.
+3. **M1.5 — Geometry analysis** (stretch, per the brief itself): frontage,
+   neighbour distances, slope from LiDAR, buildable envelope.
+4. **M2 — Ingestion & provenance**: national legislation via the Legilux SPARQL
    endpoint (in-force versions only), the two communes' PAG/PAP/building bylaws,
    idempotent + incremental pipeline, status dashboard.
-3. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
-4. **M5 — Procedure assistant**: only if time remains.
+5. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
+6. **M5 — Procedure assistant**: only if time remains.
 
 Deliverables to accompany the code: `SOURCES.md`, `SCALING.md`, `EVAL.md`, and a
 weekly `PROGRESS.md`.
