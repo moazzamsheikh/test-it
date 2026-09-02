@@ -60,6 +60,29 @@ export interface OverlayLayerInfo {
   source_url: string;
 }
 
+export interface NeighbourDistance {
+  cadastral_id: string;
+  distance_m: number;
+}
+
+export interface SlopeResult {
+  // All null together = no LiDAR coverage for this parcel (see DECISIONS.md)
+  // — never a fabricated zero.
+  avg_slope_pct: number | null;
+  max_slope_pct: number | null;
+  min_elevation_m: number | null;
+  max_elevation_m: number | null;
+  sample_pixel_count: number;
+  source_url: string;
+}
+
+export interface BuildableEnvelope {
+  setback_m: number;
+  envelope_area_m2: number;
+  is_empty: boolean;
+  geometry_wgs84_geojson: Record<string, unknown> | null;
+}
+
 export interface ParcelDetail extends ParcelSummary {
   lieudit: string | null;
   nature_code: number | null;
@@ -68,6 +91,8 @@ export interface ParcelDetail extends ParcelSummary {
   addresses: AddressSummary[];
   buildings: BuildingSummary[];
   constraints: OverlayConstraint[];
+  frontage_m: number;
+  neighbours: NeighbourDistance[];
   // Passed straight through to ol/format/GeoJSON, which accepts any raw
   // GeoJSON object — no need for full GeoJSON types here.
   geometry_wgs84_geojson: Record<string, unknown>;

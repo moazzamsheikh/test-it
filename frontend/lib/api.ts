@@ -1,9 +1,11 @@
 import type {
   AddressSearchResult,
+  BuildableEnvelope,
   OverlayLayerInfo,
   ParcelDetail,
   ParcelIdentifyResponse,
   ParcelSummary,
+  SlopeResult,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -52,6 +54,25 @@ export async function getOverlayLayers(): Promise<OverlayLayerInfo[]> {
     throw new Error(`overlay layers failed: HTTP ${response.status}`);
   }
   return (await response.json()) as OverlayLayerInfo[];
+}
+
+/** Separate from getParcelDetail on purpose — an uncached slope lookup is a
+ * multi-second remote LiDAR read, so it's fetched lazily on demand rather
+ * than blocking the rest of the side panel (see backend DECISIONS.md). */
+export function getParcelSlope(cadastralId: string): Promise<SlopeResult> {
+  return getJson<SlopeResult>(`/api/v1/parcels/${encodeURIComponent(cadastralId)}/slope`, {});
+}
+
+/** PAG/PAP setback values aren't reliably extractable yet, so setbackM is a
+ * manual value the user enters — not a fabricated default (see DECISIONS.md). */
+export function getBuildableEnvelope(
+  cadastralId: string,
+  setbackM: number,
+): Promise<BuildableEnvelope> {
+  return getJson<BuildableEnvelope>(
+    `/api/v1/parcels/${encodeURIComponent(cadastralId)}/buildable-envelope`,
+    { setback_m: setbackM },
+  );
 }
 
 export async function getParcelDetail(cadastralId: string): Promise<ParcelDetail | null> {

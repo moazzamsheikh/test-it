@@ -1,15 +1,24 @@
 "use client";
 
-import type { ParcelDetail, ParcelSummary } from "@/lib/types";
+import { useState } from "react";
+import { getBuildableEnvelope, getParcelSlope } from "@/lib/api";
+import type { BuildableEnvelope, ParcelDetail, ParcelSummary, SlopeResult } from "@/lib/types";
 
 interface Props {
   parcel: ParcelDetail | null;
   candidates: ParcelSummary[];
   loading: boolean;
   onSelectCandidate: (cadastralId: string) => void;
+  onEnvelopeChange: (geojson: Record<string, unknown> | null) => void;
 }
 
-export default function ParcelPanel({ parcel, candidates, loading, onSelectCandidate }: Props) {
+export default function ParcelPanel({
+  parcel,
+  candidates,
+  loading,
+  onSelectCandidate,
+  onEnvelopeChange,
+}: Props) {
   if (loading) {
     return <div className="p-4 text-sm text-zinc-500">Loading…</div>;
   }
@@ -119,7 +128,152 @@ export default function ParcelPanel({ parcel, candidates, loading, onSelectCandi
         )}
       </div>
 
+      {/* Keyed on cadastral_id so switching parcels remounts with fresh
+          local state, instead of an effect resetting it (React 19 flags
+          synchronous setState in an effect body — see DECISIONS.md). The
+          map-visible envelope layer itself is cleared by the parent
+          (page.tsx) as soon as selectedParcelId changes. */}
+      <GeometrySection
+        key={parcel.cadastral_id}
+        parcel={parcel}
+        onEnvelopeChange={onEnvelopeChange}
+      />
+
       <ConstraintsSection constraints={parcel.constraints} />
+    </div>
+  );
+}
+
+function GeometrySection({
+  parcel,
+  onEnvelopeChange,
+}: {
+  parcel: ParcelDetail;
+  onEnvelopeChange: (geojson: Record<string, unknown> | null) => void;
+}) {
+  const [slope, setSlope] = useState<SlopeResult | null>(null);
+  const [slopeLoading, setSlopeLoading] = useState(false);
+  const [slopeFailed, setSlopeFailed] = useState(false);
+  const [setbackInput, setSetbackInput] = useState("3");
+  const [envelope, setEnvelope] = useState<BuildableEnvelope | null>(null);
+  const [envelopeLoading, setEnvelopeLoading] = useState(false);
+  const [envelopeFailed, setEnvelopeFailed] = useState(false);
+
+  async function handleComputeSlope() {
+    setSlopeLoading(true);
+    setSlopeFailed(false);
+    try {
+      setSlope(await getParcelSlope(parcel.cadastral_id));
+    } catch {
+      setSlopeFailed(true);
+    } finally {
+      setSlopeLoading(false);
+    }
+  }
+
+  async function handleShowEnvelope() {
+    const setbackM = Number(setbackInput);
+    if (!Number.isFinite(setbackM) || setbackM < 0) return;
+    setEnvelopeLoading(true);
+    setEnvelopeFailed(false);
+    try {
+      const result = await getBuildableEnvelope(parcel.cadastral_id, setbackM);
+      setEnvelope(result);
+      onEnvelopeChange(result.geometry_wgs84_geojson);
+    } catch {
+      setEnvelopeFailed(true);
+      onEnvelopeChange(null);
+    } finally {
+      setEnvelopeLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-zinc-700">Geometry analysis</h3>
+
+      <p className="mt-1 text-sm text-zinc-600">
+        {parcel.frontage_m > 0
+          ? `${parcel.frontage_m.toFixed(1)} m road frontage`
+          : "No direct road frontage found (landlocked, or accessed via an easement not captured as its own road parcel)"}
+      </p>
+
+      {parcel.neighbours.length > 0 && (
+        <details className="mt-2">
+          <summary className="cursor-pointer text-xs text-zinc-500">
+            {parcel.neighbours.length} nearby parcels
+          </summary>
+          <ul className="mt-1 space-y-0.5 text-xs text-zinc-500">
+            {parcel.neighbours.map((n) => (
+              <li key={n.cadastral_id}>
+                {n.cadastral_id} —{" "}
+                {n.distance_m < 0.01 ? "touching" : `${n.distance_m.toFixed(1)} m away`}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      <div className="mt-3 border-t border-zinc-200 pt-2">
+        <button
+          type="button"
+          onClick={() => void handleComputeSlope()}
+          disabled={slopeLoading}
+          className="rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50"
+        >
+          {slopeLoading ? "Computing…" : slope ? "Recompute slope" : "Compute slope (LiDAR)"}
+        </button>
+        {slopeFailed && (
+          <p className="mt-1 text-xs text-red-600">Slope lookup failed — try again.</p>
+        )}
+        {slope &&
+          (slope.sample_pixel_count === 0 ? (
+            <p className="mt-1 text-xs text-zinc-500">No LiDAR coverage for this parcel.</p>
+          ) : (
+            <p className="mt-1 text-xs text-zinc-600">
+              Avg {slope.avg_slope_pct?.toFixed(1)}% · Max {slope.max_slope_pct?.toFixed(1)}% ·
+              Elevation {slope.min_elevation_m?.toFixed(1)}–{slope.max_elevation_m?.toFixed(1)} m
+            </p>
+          ))}
+      </div>
+
+      <div className="mt-3 border-t border-zinc-200 pt-2">
+        <label className="flex items-center gap-2 text-xs text-zinc-600">
+          Setback (m)
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            value={setbackInput}
+            onChange={(e) => setSetbackInput(e.target.value)}
+            className="w-16 rounded border border-zinc-300 px-1 py-0.5 text-xs"
+          />
+        </label>
+        <p className="mt-0.5 text-[11px] text-zinc-400">
+          Manual — PAG/PAP setback values aren&apos;t extracted yet
+        </p>
+        <button
+          type="button"
+          onClick={() => void handleShowEnvelope()}
+          disabled={envelopeLoading}
+          className="mt-1 rounded-md bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-200 disabled:opacity-50"
+        >
+          {envelopeLoading ? "Computing…" : "Show buildable envelope"}
+        </button>
+        {envelopeFailed && (
+          <p className="mt-1 text-xs text-red-600">Envelope lookup failed — try again.</p>
+        )}
+        {envelope &&
+          (envelope.is_empty ? (
+            <p className="mt-1 text-xs text-zinc-500">
+              This setback fully erodes the parcel — nothing buildable.
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-zinc-600">
+              {envelope.envelope_area_m2.toFixed(1)} m² buildable
+            </p>
+          ))}
+      </div>
     </div>
   );
 }

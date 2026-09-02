@@ -4,12 +4,14 @@ Spatial + regulatory data platform for architects: given a Luxembourg cadastral
 parcel, resolve the regulations that apply to it and answer questions about it
 with citations to official sources.
 
-> **Status: M1.1-M1.3 are real and working together.** Open the map, click a
+> **Status: M1.1-M1.5 are real and working together.** Open the map, click a
 > parcel or search an address, see a real Wiltz/Luxembourg City parcel with
-> its geometry highlighted and a side panel of its addresses/buildings —
-> verified in a real browser, not just curl. Regulatory overlays (M1.4),
-> geometry analysis (M1.5), and modules M2-M5 do not exist yet. This README
-> describes what actually runs today, not what is planned — see [Roadmap](#roadmap).
+> its geometry highlighted, its regulatory overlays (PAG zoning, Natura 2000,
+> flood zones, servitudes, etc.), and its geometry analysis (road frontage,
+> nearby-parcel distances, LiDAR-derived slope, a manual-setback buildable
+> envelope) — verified in a real browser, not just curl. Modules M2-M5 do not
+> exist yet. This README describes what actually runs today, not what is
+> planned — see [Roadmap](#roadmap).
 
 ---
 
@@ -25,9 +27,10 @@ with citations to official sources.
 | M1.2 address search API — trigram fuzzy match, sub-15ms warm (see below) | ✅ |
 | M1.3 parcel identify (by click, by cadastral reference) + full detail API | ✅ |
 | M1.1 map UI — Next.js + OpenLayers, 3 real switchable WMS base layers, click-to-identify, address search, side panel | ✅ |
-| 21 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
+| M1.4 regulatory overlays — 18 real WMS layers, per-parcel cached intersects | ✅ |
+| M1.5 geometry analysis — road frontage, neighbour distances, LiDAR slope, manual-setback buildable envelope | ✅ |
+| 30 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
 | `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
-| M1.4 overlays, M1.5 geometry analysis | ⛔ not started |
 | M2 ingestion (legislation, PAG/PAP/bylaws) · M3 chatbot · M4 report/PDF · M5 procedures | ⛔ not started |
 
 ---
@@ -289,10 +292,13 @@ frontend/
 
 ## Current limitations (honest status)
 
-- **No regulatory overlays or geometry analysis (M1.4, M1.5) yet.** The map
-  shows three real base layers and identifies parcels; it doesn't yet show
-  PAG zoning, flood zones, Natura 2000, or any of the other overlay layers,
-  and there's no frontage/slope/setback analysis.
+- **No zone_verte or HV electricity easement overlay layer.** Searched
+  exhaustively across the full 1437-layer geoportail theme tree — neither
+  exists as a real, distinct layer there (see SOURCES.md).
+- **Buildable envelope uses a single manual uniform setback, not real PAG/PAP
+  values.** National/commune legislation ingestion (M2) hasn't started, so
+  setback values aren't reliably extractable yet — the brief's own explicit
+  escape hatch for this exact gap (see DECISIONS.md).
 - **No declared/legal area source found.** PCN's `PARCELLES` layer has no
   area field at all; `area_declared_m2` is always `null` until a source is
   found (see DECISIONS.md) — never fabricated.
@@ -320,11 +326,12 @@ frontend/
 
 ## Roadmap
 
-1. **M1.4 — Regulatory overlays**: enumerate real thematic WMS/WFS layer names
-   (PAG, Natura 2000, flood zones, etc. — not done yet), generic config-driven
-   mechanism, ≥10 real layers.
-2. **M1.5 — Geometry analysis** (stretch, per the brief itself): frontage,
-   neighbour distances, slope from LiDAR, buildable envelope.
+1. ~~**M1.4 — Regulatory overlays**~~ ✅ done — 18 real thematic WMS layers
+   (PAG, Natura 2000, flood zones, servitudes, etc.), config-driven, cached
+   per-parcel intersects.
+2. ~~**M1.5 — Geometry analysis**~~ ✅ done (stretch, per the brief itself) —
+   road frontage, neighbour distances, LiDAR-derived slope, manual-setback
+   buildable envelope.
 3. **M2 — Ingestion & provenance**: national legislation via the Legilux SPARQL
    endpoint (in-force versions only), the two communes' PAG/PAP/building bylaws,
    idempotent + incremental pipeline, status dashboard.

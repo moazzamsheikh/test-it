@@ -48,13 +48,15 @@ const INITIAL_ZOOM_INDEX = 6; // resolution 2 m/px — a comfortable street-leve
 interface Props {
   parcelDetail: ParcelDetail | null;
   flyTo: { lon: number; lat: number } | null;
+  envelopeGeojson: Record<string, unknown> | null;
   onMapClick: (lon: number, lat: number) => void;
 }
 
-export default function MapView({ parcelDetail, flyTo, onMapClick }: Props) {
+export default function MapView({ parcelDetail, flyTo, envelopeGeojson, onMapClick }: Props) {
   const targetRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const highlightSourceRef = useRef<VectorSource | null>(null);
+  const envelopeSourceRef = useRef<VectorSource | null>(null);
   const [activeBaseLayer, setActiveBaseLayer] = useState<BaseLayerId>("Basemap");
   const [overlayLayerInfos, setOverlayLayerInfos] = useState<OverlayLayerInfo[]>([]);
   const [activeOverlayCodes, setActiveOverlayCodes] = useState<Set<string>>(new Set());
@@ -137,9 +139,21 @@ export default function MapView({ parcelDetail, flyTo, onMapClick }: Props) {
       }),
     });
 
+    // M1.5 buildable envelope — a distinct colour from the yellow parcel
+    // highlight, drawn on top of it since the envelope sits inside the parcel.
+    const envelopeSource = new VectorSource();
+    envelopeSourceRef.current = envelopeSource;
+    const envelopeLayer = new VectorLayer({
+      source: envelopeSource,
+      style: new Style({
+        stroke: new Stroke({ color: "#16a34a", width: 2, lineDash: [6, 4] }),
+        fill: new Fill({ color: "rgba(22, 163, 74, 0.2)" }),
+      }),
+    });
+
     const map = new Map({
       target: targetRef.current,
-      layers: [...baseLayers, ...overlayLayers, highlightLayer],
+      layers: [...baseLayers, ...overlayLayers, highlightLayer, envelopeLayer],
       view: new View({
         projection: LUREF,
         center: DEFAULT_CENTER_LUREF,
@@ -195,6 +209,20 @@ export default function MapView({ parcelDetail, flyTo, onMapClick }: Props) {
     });
     source.addFeature(new Feature({ geometry }));
   }, [parcelDetail]);
+
+  // M1.5 buildable envelope — cleared whenever the parent clears it (a new
+  // parcel selected, or no envelope computed yet for this one).
+  useEffect(() => {
+    const source = envelopeSourceRef.current;
+    if (!source) return;
+    source.clear();
+    if (!envelopeGeojson) return;
+    const geometry = new GeoJSON().readGeometry(envelopeGeojson, {
+      dataProjection: WGS84,
+      featureProjection: LUREF,
+    });
+    source.addFeature(new Feature({ geometry }));
+  }, [envelopeGeojson]);
 
   // Fly to a selected address.
   useEffect(() => {

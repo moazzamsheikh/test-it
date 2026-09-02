@@ -17,10 +17,14 @@ export default function Home() {
   const [candidates, setCandidates] = useState<ParcelSummary[]>([]);
   const [flyTo, setFlyTo] = useState<{ lon: number; lat: number } | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [envelopeGeojson, setEnvelopeGeojson] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     async function loadDetail() {
+      // A different parcel is being loaded (or none at all) — any envelope
+      // computed for the previous parcel no longer applies.
+      setEnvelopeGeojson(null);
       if (!selectedParcelId) {
         setParcelDetail(null);
         return;
@@ -76,7 +80,12 @@ export default function Home() {
       </header>
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1">
-          <MapView parcelDetail={parcelDetail} flyTo={flyTo} onMapClick={handleMapClick} />
+          <MapView
+            parcelDetail={parcelDetail}
+            flyTo={flyTo}
+            envelopeGeojson={envelopeGeojson}
+            onMapClick={handleMapClick}
+          />
         </main>
         <aside className="w-96 shrink-0 border-l border-zinc-200 bg-white">
           <ParcelPanel
@@ -84,6 +93,7 @@ export default function Home() {
             candidates={candidates}
             loading={loadingDetail}
             onSelectCandidate={handleSelectCandidate}
+            onEnvelopeChange={setEnvelopeGeojson}
           />
         </aside>
       </div>
