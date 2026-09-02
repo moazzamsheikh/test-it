@@ -37,6 +37,26 @@ class OverlayConstraint(BaseModel):
     source_url: str
 
 
+class NeighbourDistance(BaseModel):
+    """M1.5 — a nearby non-road parcel and the true minimum distance between
+    the two parcels' boundaries (0.0 when they actually share an edge)."""
+
+    cadastral_id: str
+    distance_m: float
+
+
+class BuildableEnvelope(BaseModel):
+    """M1.5 — parcel polygon minus a manually-entered uniform setback (PAG/PAP
+    setback values aren't reliably extractable yet, see DECISIONS.md).
+    `geometry_wgs84_geojson` is null when the setback fully erodes the
+    parcel — a real, expected outcome, not an error."""
+
+    setback_m: float
+    envelope_area_m2: float
+    is_empty: bool
+    geometry_wgs84_geojson: dict[str, object] | None
+
+
 class ParcelSummary(BaseModel):
     """Minimal shape returned by identify-by-point and by-reference search —
     enough to let the caller pick one, then fetch full detail by cadastral_id."""
@@ -64,6 +84,10 @@ class ParcelDetail(ParcelSummary):
     addresses: list[AddressSummary]
     buildings: list[BuildingSummary]
     constraints: list[OverlayConstraint]
+    # M1.5 — road frontage (0.0 is a real, honest result: landlocked, no
+    # direct road access) and nearby non-road parcels with true distances.
+    frontage_m: float
+    neighbours: list[NeighbourDistance]
     geometry_wgs84_geojson: dict[str, object]
 
 

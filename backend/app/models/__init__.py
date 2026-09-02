@@ -13,6 +13,7 @@ from app.models.cadastre import (
 )
 from app.models.overlays import ParcelOverlayResult
 from app.models.provenance import Chunk, Document, Source
+from app.models.slope import ParcelSlopeResult
 
 __all__ = [
     "Address",
@@ -27,5 +28,6 @@ __all__ = [
     "ParcelBuilding",
     "ParcelNature",
     "ParcelOverlayResult",
+    "ParcelSlopeResult",
     "Source",
 ]

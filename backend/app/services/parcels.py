@@ -26,6 +26,7 @@ from app.schemas.parcel import (
     ParcelDetail,
     ParcelSummary,
 )
+from app.services.geometry_analysis import compute_frontage_m, compute_neighbours
 from app.services.overlays import get_or_compute_overlays
 
 
@@ -84,6 +85,14 @@ async def find_by_reference(
     return [ParcelSummary.model_validate(row, from_attributes=True) for row in rows]
 
 
+async def get_parcel_id(session: AsyncSession, cadastral_id: str) -> Any | None:
+    """Lightweight lookup for endpoints (like slope) that only need the
+    internal id, not the full detail payload."""
+    return (
+        await session.execute(select(Parcel.id).where(Parcel.cadastral_id == cadastral_id))
+    ).scalar_one_or_none()
+
+
 async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelDetail | None:
     stmt = _parcel_summary_query().add_columns(
         Parcel.id,
@@ -123,6 +132,8 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
     ).all()
 
     overlay_results = await get_or_compute_overlays(session, row.id)
+    frontage_m = await compute_frontage_m(session, row.id)
+    neighbours = await compute_neighbours(session, row.id)
     constraints = [
         OverlayConstraint(
             layer_code=result.layer_code,
@@ -153,5 +164,7 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
         addresses=[AddressSummary.model_validate(a, from_attributes=True) for a in addresses],
         buildings=[BuildingSummary.model_validate(b, from_attributes=True) for b in buildings],
         constraints=constraints,
+        frontage_m=frontage_m,
+        neighbours=neighbours,
         geometry_wgs84_geojson=json.loads(row.geometry_wgs84_geojson),
     )
