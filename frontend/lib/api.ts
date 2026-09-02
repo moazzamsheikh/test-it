@@ -1,5 +1,6 @@
 import type {
   AddressSearchResult,
+  OverlayLayerInfo,
   ParcelDetail,
   ParcelIdentifyResponse,
   ParcelSummary,
@@ -43,6 +44,14 @@ export function findParcelByReference(
     params.numero_secondaire = numeroSecondaire;
   }
   return getJson<ParcelSummary[]>("/api/v1/parcels/by-reference", params);
+}
+
+export async function getOverlayLayers(): Promise<OverlayLayerInfo[]> {
+  const response = await fetch(`${API_BASE}/api/v1/overlays`);
+  if (!response.ok) {
+    throw new Error(`overlay layers failed: HTTP ${response.status}`);
+  }
+  return (await response.json()) as OverlayLayerInfo[];
 }
 
 export async function getParcelDetail(cadastralId: string): Promise<ParcelDetail | null> {

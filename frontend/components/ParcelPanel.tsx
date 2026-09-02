@@ -118,6 +118,55 @@ export default function ParcelPanel({ parcel, candidates, loading, onSelectCandi
           </ul>
         )}
       </div>
+
+      <ConstraintsSection constraints={parcel.constraints} />
+    </div>
+  );
+}
+
+function ConstraintsSection({ constraints }: { constraints: ParcelDetail["constraints"] }) {
+  const applies = constraints.filter((c) => c.intersects);
+  const doesNotApply = constraints.filter((c) => !c.intersects);
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-zinc-700">
+        Regulatory constraints ({applies.length} of {constraints.length} apply)
+      </h3>
+      {applies.length === 0 ? (
+        <p className="text-sm text-zinc-500">None of the checked overlays apply here.</p>
+      ) : (
+        <ul className="mt-1 space-y-2">
+          {applies.map((c) => (
+            <li key={c.layer_code} className="rounded-md border border-amber-200 bg-amber-50 p-2">
+              <div className="text-sm font-medium text-amber-900">{c.label}</div>
+              {c.overlap_m2 !== null && (
+                <div className="text-xs text-amber-800">{c.overlap_m2.toFixed(1)} m² overlap</div>
+              )}
+              <a
+                href={c.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-700 underline"
+              >
+                Source
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {doesNotApply.length > 0 && (
+        <details className="mt-2">
+          <summary className="cursor-pointer text-xs text-zinc-500">
+            {doesNotApply.length} checked and not applicable
+          </summary>
+          <ul className="mt-1 space-y-0.5 text-xs text-zinc-500">
+            {doesNotApply.map((c) => (
+              <li key={c.layer_code}>{c.label}</li>
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

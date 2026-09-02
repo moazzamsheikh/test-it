@@ -41,6 +41,25 @@ export interface BuildingSummary {
   overlap_m2: number;
 }
 
+export interface OverlayConstraint {
+  layer_code: string;
+  label: string;
+  category: string;
+  intersects: boolean;
+  overlap_m2: number | null;
+  detail: Record<string, unknown> | null;
+  source_url: string;
+}
+
+export interface OverlayLayerInfo {
+  code: string;
+  label: string;
+  category: string;
+  wms_layer_id: number;
+  queryable: boolean;
+  source_url: string;
+}
+
 export interface ParcelDetail extends ParcelSummary {
   lieudit: string | null;
   nature_code: number | null;
@@ -48,6 +67,7 @@ export interface ParcelDetail extends ParcelSummary {
   area_declared_m2: number | null;
   addresses: AddressSummary[];
   buildings: BuildingSummary[];
+  constraints: OverlayConstraint[];
   // Passed straight through to ol/format/GeoJSON, which accepts any raw
   // GeoJSON object — no need for full GeoJSON types here.
   geometry_wgs84_geojson: Record<string, unknown>;
