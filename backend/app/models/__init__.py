@@ -11,6 +11,7 @@ from app.models.cadastre import (
     ParcelBuilding,
     ParcelNature,
 )
+from app.models.overlays import ParcelOverlayResult
 from app.models.provenance import Chunk, Document, Source
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     "Parcel",
     "ParcelBuilding",
     "ParcelNature",
+    "ParcelOverlayResult",
     "Source",
 ]

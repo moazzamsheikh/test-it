@@ -113,3 +113,69 @@ we found it by reading the crosswalk rather than assuming a 1:1 mapping.
 - Thematic overlay layers for M1.4 (PAG, Natura 2000, flood zones, etc.) have not
   been enumerated yet — that's M1.4's own GetCapabilities pass, deferred until
   the core parcel/address schema lands.
+
+## 3.4 · M1.4 thematic overlay layers — the official client's own theme config
+
+`GetCapabilities` alone (checked earlier) does not surface these — the working
+approach was to read the **official geoportail.lu web client's own layer
+configuration**, the same way a browser loading map.geoportail.lu would, which
+is a legitimate way to discover real endpoints (not guessing, not scraping
+private data — it's the public client's own public config).
+
+- **Discovery path:** `apiv4.geoportail.lu/apiv4loader.js` (named in the brief)
+  → confirms `apiv4.geoportail.lu` as the client's own base URL, and its
+  bundled `proj4.defs('EPSG:2169', ...)` matches our own datum parameters to
+  3 decimals — independent confirmation of the reprojection fix logged in
+  DECISIONS.md.
+- **Themes endpoint:** `https://map.geoportail.lu/themes?interface=main&all=true`
+  (JSON, CC-BY per the same licence as the rest of geoportail.lu data) returns
+  the full layer tree the official client itself uses — 19 top-level themes,
+  1437 individual WMS layers. Needs `interface=main` — without it the `themes`
+  array comes back empty (not an error, easy to mistake for "no data here").
+- **The actual WMS endpoint these layers are served from:**
+  `https://wms.geoportail.lu/public_map_layers/service` — a *third* distinct
+  geoportail WMS endpoint (`ws.geoportail.lu`, `wms.geoportail.lu/opendata/service`,
+  and now this one all serve different layer sets). **Layers are addressed by
+  numeric ID, not name** — e.g. PAG zoning's friendly name `pag_pag` in the
+  theme config corresponds to `LAYERS=698` in the actual WMS request; the
+  numeric ID is the theme JSON's own `"layers"` field per node. Verified with a
+  live `GetMap` (real PAG zoning colours for a Luxembourg City block) and
+  `GetFeatureInfo` (`INFO_FORMAT=application/json` returns full feature
+  **geometry**, not just attributes — unusual for GetFeatureInfo, but real,
+  confirmed on layer 698).
+- **No WFS** on this endpoint (`SERVICE=WFS` → `ows:ExceptionReport`) — ruled
+  out as an option, not assumed.
+- **Layer mapping compiled so far** (name → numeric WMS ID, `queryable` per the
+  theme config's own metadata):
+
+| Spec category | Layer name | WMS ID | Queryable |
+|---|---|---|---|
+| PAG zoning | `pag_pag` | 698 | yes |
+| PAP (approved) | `pag_pap_approuves` | 696 | **no** — renders, GetFeatureInfo unavailable |
+| POS perimeters | `pag_pos` | 710 | yes |
+| PSL (logement) | `at_psl1` | 401 | yes |
+| PST (transports) | `at_pst1` / `at_pst2` | 410 / 408 | yes |
+| PSZAE (zones économiques) | `at_pszae1` | 407 | yes |
+| PSP (paysages) | `at_psp_cv` / `at_psp_zvi` / `at_psp_gep` | 396 / 409 / 395 | yes |
+| Natura 2000 habitats | `natura2000_habitats` | 540 | yes |
+| Natura 2000 birds | `natura2000_oiseaux` | 533 | yes |
+| National nature reserves | `anf_zpin_declarees` | 804 | yes |
+| Flood zones (HQ20/HQ100 shown; HQ05/10/50/ext also exist) | `eau_Hochwassergefahrenkarten_HQ20` / `HQ100` | 3037 / 3262 | yes |
+| Drinking-water protection | `eau_new_ZPS_durch_grosshrzgl._Verordnung_festgelegt` | 573 | yes |
+| Protected buildings/heritage | `pag_ssmn` (Service des sites et monuments nationaux) | 709 | **no** |
+| Archaeological sites | `arch_zoa` | 2560 | unclear, not yet tested |
+| Noise (airport) | `aev_bruit_aeroport_2021_Lden` | 2667 | yes |
+| Findel airport servitude (aviation height limits) | `ana_vfr_findel_lim` | 3212 | yes |
+| High-pressure gas | `gaz_naturel` | 1494 | yes |
+
+**17 layers found real and named; 12+ confirmed queryable** — comfortably past
+the ≥10 requirement. Two genuine gaps, not forced with a wrong match:
+- **Zone verte** — no standalone layer exists anywhere in the 1437-layer tree
+  (searched exhaustively for "vert"/"vergrünt" etc.). Zone verte is legally
+  defined (Art. 6, loi protection de la nature) as land *outside* PAG building
+  perimeters — it may need to be derived as PAG's spatial complement rather
+  than fetched as its own overlay. Not attempted yet.
+- **HV electricity easements** — no layer found (searched "electr", "haute_tension",
+  "HT"). `gaz_naturel` covers the gas half of that spec line; the electricity
+  half may not be published on this public service at all (Creos, the grid
+  operator, may not expose it here).

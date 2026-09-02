@@ -21,6 +21,22 @@ class BuildingSummary(BaseModel):
     overlap_m2: float
 
 
+class OverlayConstraint(BaseModel):
+    """One M1.4 regulatory overlay's result for this parcel — intersects
+    yes/no, the intersecting feature's own attributes (whatever that layer
+    carries), a source URL, and the exact overlap area when we found a real
+    hit (see app/services/overlays.py for why "found a hit" is a sampled
+    approximation but the area itself, once found, is exact)."""
+
+    layer_code: str
+    label: str
+    category: str
+    intersects: bool
+    overlap_m2: float | None
+    detail: dict[str, object] | None
+    source_url: str
+
+
 class ParcelSummary(BaseModel):
     """Minimal shape returned by identify-by-point and by-reference search —
     enough to let the caller pick one, then fetch full detail by cadastral_id."""
@@ -47,6 +63,7 @@ class ParcelDetail(ParcelSummary):
     area_declared_m2: float | None
     addresses: list[AddressSummary]
     buildings: list[BuildingSummary]
+    constraints: list[OverlayConstraint]
     geometry_wgs84_geojson: dict[str, object]
 
 

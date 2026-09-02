@@ -10,10 +10,11 @@ the real ingested dataset.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 from sqlalchemy import Engine, create_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -35,3 +36,22 @@ def db_session(engine: Engine) -> Iterator[Session]:
         session.close()
         transaction.rollback()
         connection.close()
+
+
+@pytest.fixture(scope="session")
+def async_engine() -> AsyncEngine:
+    # Same URL works for both drivers — see app/core/db.py.
+    return create_async_engine(settings.database_url)
+
+
+@pytest.fixture
+async def async_db_session(async_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
+    connection = await async_engine.connect()
+    transaction = await connection.begin()
+    session = AsyncSession(bind=connection)
+    try:
+        yield session
+    finally:
+        await session.close()
+        await transaction.rollback()
+        await connection.close()

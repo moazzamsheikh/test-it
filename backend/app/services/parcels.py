@@ -18,7 +18,15 @@ from app.models.cadastre import (
     ParcelBuilding,
     ParcelNature,
 )
-from app.schemas.parcel import AddressSummary, BuildingSummary, ParcelDetail, ParcelSummary
+from app.overlay_layers import OVERLAY_LAYERS_BY_CODE
+from app.schemas.parcel import (
+    AddressSummary,
+    BuildingSummary,
+    OverlayConstraint,
+    ParcelDetail,
+    ParcelSummary,
+)
+from app.services.overlays import get_or_compute_overlays
 
 
 def _parcel_summary_query() -> Select[Any]:
@@ -114,6 +122,20 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
         )
     ).all()
 
+    overlay_results = await get_or_compute_overlays(session, row.id)
+    constraints = [
+        OverlayConstraint(
+            layer_code=result.layer_code,
+            label=OVERLAY_LAYERS_BY_CODE[result.layer_code].label,
+            category=OVERLAY_LAYERS_BY_CODE[result.layer_code].category,
+            intersects=result.intersects,
+            overlap_m2=result.overlap_m2,
+            detail=result.detail,
+            source_url=result.source_url,
+        )
+        for result in overlay_results
+    ]
+
     return ParcelDetail(
         cadastral_id=row.cadastral_id,
         cadastral_commune_code=row.cadastral_commune_code,
@@ -130,5 +152,6 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
         area_declared_m2=row.area_declared_m2,
         addresses=[AddressSummary.model_validate(a, from_attributes=True) for a in addresses],
         buildings=[BuildingSummary.model_validate(b, from_attributes=True) for b in buildings],
+        constraints=constraints,
         geometry_wgs84_geojson=json.loads(row.geometry_wgs84_geojson),
     )
