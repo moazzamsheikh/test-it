@@ -102,7 +102,14 @@ export default function MapView({ parcelDetail, flyTo, envelopeGeojson, onMapCli
     const baseLayers = BASE_LAYERS.map((layer) => {
       const source = new ImageWMS({
         url: WMS_URL,
-        params: { LAYERS: layer.id, VERSION: "1.3.0", TRANSPARENT: true },
+        // VERSION 1.1.1, not 1.3.0: EPSG:2169's registered axis order is
+        // Northing,Easting (confirmed against the EPSG registry), and WMS
+        // 1.3.0 is spec-required to honour that in BBOX — which silently
+        // sent every request to the wrong real-world location (verified
+        // live: an address rendered ~15km away). WMS 1.1.1's BBOX is always
+        // Easting,Northing regardless of the CRS's registered axis order,
+        // sidestepping the issue entirely — see DECISIONS.md.
+        params: { LAYERS: layer.id, VERSION: "1.1.1", TRANSPARENT: true },
         projection: LUREF,
         ratio: 1.2,
       });
@@ -117,7 +124,7 @@ export default function MapView({ parcelDetail, flyTo, envelopeGeojson, onMapCli
     const overlayLayers = overlayLayerInfos.map((layer) => {
       const source = new ImageWMS({
         url: OVERLAY_WMS_URL,
-        params: { LAYERS: String(layer.wms_layer_id), VERSION: "1.3.0", TRANSPARENT: true },
+        params: { LAYERS: String(layer.wms_layer_id), VERSION: "1.1.1", TRANSPARENT: true },
         projection: LUREF,
         ratio: 1.2,
       });

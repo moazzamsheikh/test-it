@@ -67,26 +67,40 @@ def _sample_points(geom: BaseGeometry) -> list[Point]:
     return points
 
 
-async def _query_point(
-    client: httpx.AsyncClient, layer: OverlayLayer, point: Point, semaphore: asyncio.Semaphore
-) -> dict[str, Any] | None:
+def _build_getfeatureinfo_params(layer: OverlayLayer, point: Point) -> dict[str, str]:
+    """VERSION 1.1.1, not 1.3.0 — see DECISIONS.md: EPSG:2169's registered
+    axis order is Northing,Easting, which WMS 1.3.0 is spec-required to
+    honour in BBOX, so a 1.3.0 request built with (Easting,Northing) — the
+    natural order everywhere else in this codebase — silently queried a
+    location ~15km away from the real point (verified live: correct hits for
+    a real Ville-Haute parcel only appeared once switched to 1.1.1). WMS
+    1.1.1's BBOX is always Easting,Northing regardless of the CRS's
+    registered axis order, sidestepping the issue entirely. This exact
+    param shape (VERSION/SRS/X,Y — not CRS/I,J) is the whole fix; test_wms_params
+    guards against silently drifting back to 1.3.0."""
     b = _QUERY_BUFFER_M
-    params = {
+    return {
         "SERVICE": "WMS",
-        "VERSION": "1.3.0",
+        "VERSION": "1.1.1",
         "REQUEST": "GetFeatureInfo",
         "LAYERS": str(layer.wms_layer_id),
         "QUERY_LAYERS": str(layer.wms_layer_id),
         "STYLES": "",
-        "CRS": "EPSG:2169",
+        "SRS": "EPSG:2169",  # 1.1.1 param name; 1.3.0 uses CRS
         "BBOX": f"{point.x - b},{point.y - b},{point.x + b},{point.y + b}",
         "WIDTH": "3",
         "HEIGHT": "3",
-        "I": "1",
-        "J": "1",
+        "X": "1",  # 1.1.1 pixel-coord param names; 1.3.0 uses I/J
+        "Y": "1",
         "INFO_FORMAT": "application/json",
         "FEATURE_COUNT": "1",
     }
+
+
+async def _query_point(
+    client: httpx.AsyncClient, layer: OverlayLayer, point: Point, semaphore: asyncio.Semaphore
+) -> dict[str, Any] | None:
+    params = _build_getfeatureinfo_params(layer, point)
     async with semaphore:
         try:
             response = await client.get(OVERLAY_WMS_URL, params=params, timeout=10.0)

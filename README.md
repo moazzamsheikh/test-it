@@ -29,7 +29,7 @@ with citations to official sources.
 | M1.1 map UI — Next.js + OpenLayers, 3 real switchable WMS base layers, click-to-identify, address search, side panel | ✅ |
 | M1.4 regulatory overlays — 18 real WMS layers, per-parcel cached intersects | ✅ |
 | M1.5 geometry analysis — road frontage, neighbour distances, LiDAR slope, manual-setback buildable envelope | ✅ |
-| 30 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
+| 32 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
 | `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
 | M2 ingestion (legislation, PAG/PAP/bylaws) · M3 chatbot · M4 report/PDF · M5 procedures | ⛔ not started |
 
