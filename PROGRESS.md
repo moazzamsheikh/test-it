@@ -40,10 +40,16 @@ Both are fixed, and both are logged in `DECISIONS.md` along with ~30 other decis
 - Buildable envelope uses one manual uniform setback, not real PAG/PAP values (M2 hasn't ingested legislation yet).
 - M2-M5 (legislation ingestion, chatbot, PDF report, procedure assistant) not started.
 
+## 2026-09-02 — WMS axis-order bug fixed; M5 partial (one real procedure)
+
+**Bug fix:** see the entry above (moved here would duplicate it — same day's work). Root cause, fix, and blast radius are fully written up in DECISIONS.md/WALKTHROUGH.md.
+
+**M5 — Procedure (partial, out of roadmap order at explicit request):** no spec text exists anywhere in this project for M5, unlike M1.4/M1.5 where the brief's exact wording was pasted before starting — flagged that honestly, and the user chose to proceed on a reasonable interpretation rather than provide it, on the condition it avoid the M2/M3 dependency. Built: a structured, citation-backed display of exactly ONE real government procedure — guichet.public.lu's real building-permit page (found via web search), ingested through the `sources`/`documents`/`chunks` schema that already existed from the M1 foundation (no new tables). Real content only: every section's text, the €6,197.34 exemption threshold, the 2-year validity period, and all 5 legal-basis citations (real Legilux ELI URLs) are the government's own verbatim French text, extracted via BeautifulSoup, not paraphrased. Explicitly labelled in the UI as "not a chatbot, and not specific to this parcel" — a real multi-procedure, retrieval-backed assistant needs M3 first. 4 new tests (extraction against a saved real-page fixture + a service-level read of the real ingested row), all passing; 36 total.
+
 ## Plan for the rest of the assessment
 
 1. **M2 — Ingestion & provenance**, the highest-weighted module: national legislation via the Legilux SPARQL endpoint (in-force versions only), the two communes' PAG/PAP/building bylaws, idempotent pipeline, status dashboard, the 102-commune scaling analysis.
 2. **M4 — Report + PDF**, then **M3 — hybrid retrieval + chatbot + eval harness**, in that order, since M4 depends less on M3 being solid first.
-3. **M5 — procedure assistant**: likely dropped deliberately given time, unless M1-M4 land comfortably early. Flagging this now rather than discovering it in week 3.
+3. **M5, completed properly**: a real multi-procedure, retrieval-backed assistant once M3 exists — likely dropped deliberately given time, unless M1-M4 land comfortably early.
 
 The vision hasn't changed: fewer modules built to a real, defensible standard beats five built shallowly. Everything above is chosen so each module either directly unblocks the next one, or stands alone as a genuinely working, testable piece if time runs out before the rest.

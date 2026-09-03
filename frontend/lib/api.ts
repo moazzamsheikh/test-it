@@ -5,6 +5,7 @@ import type {
   ParcelDetail,
   ParcelIdentifyResponse,
   ParcelSummary,
+  ProcedureDetail,
   SlopeResult,
 } from "./types";
 
@@ -73,6 +74,18 @@ export function getBuildableEnvelope(
     `/api/v1/parcels/${encodeURIComponent(cadastralId)}/buildable-envelope`,
     { setback_m: setbackM },
   );
+}
+
+/** M5 — a structured, citation-backed display of one real ingested
+ * government procedure (not a chatbot; see backend DECISIONS.md). Not
+ * parcel-specific: fetched once, independent of which parcel is selected. */
+export async function getBuildingPermitProcedure(): Promise<ProcedureDetail | null> {
+  const response = await fetch(`${API_BASE}/api/v1/procedures/building-permit`);
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`procedure lookup failed: HTTP ${response.status}`);
+  }
+  return (await response.json()) as ProcedureDetail;
 }
 
 export async function getParcelDetail(cadastralId: string): Promise<ParcelDetail | null> {

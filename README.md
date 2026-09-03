@@ -4,14 +4,17 @@ Spatial + regulatory data platform for architects: given a Luxembourg cadastral
 parcel, resolve the regulations that apply to it and answer questions about it
 with citations to official sources.
 
-> **Status: M1.1-M1.5 are real and working together.** Open the map, click a
-> parcel or search an address, see a real Wiltz/Luxembourg City parcel with
-> its geometry highlighted, its regulatory overlays (PAG zoning, Natura 2000,
-> flood zones, servitudes, etc.), and its geometry analysis (road frontage,
-> nearby-parcel distances, LiDAR-derived slope, a manual-setback buildable
-> envelope) — verified in a real browser, not just curl. Modules M2-M5 do not
-> exist yet. This README describes what actually runs today, not what is
-> planned — see [Roadmap](#roadmap).
+> **Status: M1.1-M1.5 are real and working together; M5 has one genuine, scoped-down slice.**
+> Open the map, click a parcel or search an address, see a real Wiltz/Luxembourg
+> City parcel with its geometry highlighted, its regulatory overlays (PAG
+> zoning, Natura 2000, flood zones, servitudes, etc.), and its geometry analysis
+> (road frontage, nearby-parcel distances, LiDAR-derived slope, a
+> manual-setback buildable envelope) — verified in a real browser, not just
+> curl. The side panel also shows one real, citation-backed government
+> procedure (building-permit application) — a structured display, explicitly
+> not a chatbot; M2 (legislation ingestion) and M3 (retrieval/chatbot) do not
+> exist yet, and M5 proper depends on both. This README describes what
+> actually runs today, not what is planned — see [Roadmap](#roadmap).
 
 ---
 
@@ -29,9 +32,10 @@ with citations to official sources.
 | M1.1 map UI — Next.js + OpenLayers, 3 real switchable WMS base layers, click-to-identify, address search, side panel | ✅ |
 | M1.4 regulatory overlays — 18 real WMS layers, per-parcel cached intersects | ✅ |
 | M1.5 geometry analysis — road frontage, neighbour distances, LiDAR slope, manual-setback buildable envelope | ✅ |
-| 32 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
+| M5 (partial) — one real procedure (building permit), citation-backed, not a chatbot | ✅ |
+| 36 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
 | `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
-| M2 ingestion (legislation, PAG/PAP/bylaws) · M3 chatbot · M4 report/PDF · M5 procedures | ⛔ not started |
+| M2 ingestion (legislation, PAG/PAP/bylaws) · M3 chatbot · M4 report/PDF | ⛔ not started |
 
 ---
 
@@ -310,8 +314,10 @@ frontend/
 - **Address search doesn't cover FR/DE/LB street-name variants** beyond a
   small abbreviation table — real alias data (CACLR's `ALIAS.RUE`) isn't
   ingested yet.
-- No ingestion of legislation, PAG/PAP/bylaws, retrieval, report, or procedure
-  logic yet (M2-M5).
+- No ingestion of legislation, PAG/PAP/bylaws, retrieval, or report logic yet
+  (M2-M4). M5 has exactly one real procedure ingested (building permit) — a
+  structured display, not a chatbot/retrieval system; a second procedure or
+  multi-document search needs M2/M3 first.
 - Migrations/ingestion/API are run from a host virtualenv (`backend/.venv`); a
   containerised backend service and `make demo` (seeded small dataset) land
   later.
@@ -332,11 +338,17 @@ frontend/
 2. ~~**M1.5 — Geometry analysis**~~ ✅ done (stretch, per the brief itself) —
    road frontage, neighbour distances, LiDAR-derived slope, manual-setback
    buildable envelope.
-3. **M2 — Ingestion & provenance**: national legislation via the Legilux SPARQL
+3. ~~**M5 — Procedure assistant**~~ ⚠️ partial, out of order at the user's
+   explicit request — one real, citation-backed government procedure
+   (building permit), no spec text available for M5 (unlike M1.4/M1.5),
+   scoped to avoid the M2/M3 dependency. Honestly labelled as a structured
+   document display, not a chatbot — see DECISIONS.md.
+4. **M2 — Ingestion & provenance**: national legislation via the Legilux SPARQL
    endpoint (in-force versions only), the two communes' PAG/PAP/building bylaws,
    idempotent + incremental pipeline, status dashboard.
-4. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
-5. **M5 — Procedure assistant**: only if time remains.
+5. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
+6. **M5, completed** — a real multi-procedure, retrieval-backed assistant once
+   M3 exists; only if time remains.
 
 Deliverables to accompany the code: `SOURCES.md`, `SCALING.md`, `EVAL.md`, and a
 weekly `PROGRESS.md`.

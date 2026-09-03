@@ -76,6 +76,25 @@ export interface SlopeResult {
   source_url: string;
 }
 
+export interface ProcedureSectionInfo {
+  heading: string;
+  text: string;
+}
+
+export interface LegalReference {
+  label: string;
+  url: string;
+}
+
+export interface ProcedureDetail {
+  title: string;
+  source_url: string;
+  publisher: string;
+  document_date: string | null;
+  sections: ProcedureSectionInfo[];
+  legal_references: LegalReference[];
+}
+
 export interface BuildableEnvelope {
   setback_m: number;
   envelope_area_m2: number;

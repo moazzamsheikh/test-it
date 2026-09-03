@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { getBuildableEnvelope, getParcelSlope } from "@/lib/api";
-import type { BuildableEnvelope, ParcelDetail, ParcelSummary, SlopeResult } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { getBuildableEnvelope, getBuildingPermitProcedure, getParcelSlope } from "@/lib/api";
+import type {
+  BuildableEnvelope,
+  ParcelDetail,
+  ParcelSummary,
+  ProcedureDetail,
+  SlopeResult,
+} from "@/lib/types";
 
 interface Props {
   parcel: ParcelDetail | null;
@@ -140,6 +146,8 @@ export default function ParcelPanel({
       />
 
       <ConstraintsSection constraints={parcel.constraints} />
+
+      <ProcedureSection />
     </div>
   );
 }
@@ -321,6 +329,81 @@ function ConstraintsSection({ constraints }: { constraints: ParcelDetail["constr
           </ul>
         </details>
       )}
+    </div>
+  );
+}
+
+function ProcedureSection() {
+  const [procedure, setProcedure] = useState<ProcedureDetail | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getBuildingPermitProcedure()
+      .then((result) => {
+        if (!cancelled) setProcedure(result);
+      })
+      .catch(() => {
+        // Not ingested yet, or a transient failure — not worth a dedicated
+        // spinner/error state for one static document; render nothing.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!procedure) return null;
+
+  return (
+    <div className="border-t border-zinc-200 pt-3">
+      <h3 className="text-sm font-semibold text-zinc-700">Related procedure</h3>
+      <p className="mt-1 text-xs text-zinc-400">
+        A structured summary of one real government procedure page — not a
+        chatbot, and not specific to this parcel.
+      </p>
+      <p className="mt-2 text-sm font-medium text-zinc-800">{procedure.title}</p>
+      <p className="text-xs text-zinc-500">
+        {procedure.publisher}
+        {procedure.document_date && ` · updated ${procedure.document_date}`} ·{" "}
+        <a
+          href={procedure.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-700 underline"
+        >
+          Source
+        </a>
+      </p>
+
+      <div className="mt-2 space-y-2">
+        {procedure.sections.map((section) => (
+          <details key={section.heading}>
+            <summary className="cursor-pointer text-sm text-zinc-700">
+              {section.heading}
+            </summary>
+            <p className="mt-1 text-xs whitespace-pre-line text-zinc-600">{section.text}</p>
+          </details>
+        ))}
+      </div>
+
+      <details className="mt-2">
+        <summary className="cursor-pointer text-xs text-zinc-500">
+          Base légale ({procedure.legal_references.length})
+        </summary>
+        <ul className="mt-1 space-y-0.5 text-xs">
+          {procedure.legal_references.map((ref) => (
+            <li key={ref.url}>
+              <a
+                href={ref.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-700 underline"
+              >
+                {ref.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
     </div>
   );
 }

@@ -43,5 +43,8 @@ ingest-addresses:  ## Ingest BD-Adresses for the target communes
 
 ingest: seed-reference ingest-parcels ingest-addresses  ## Rebuild the full M1 corpus from scratch
 
+ingest-procedures:  ## Ingest the M5 building-permit procedure guide (separate from M1 — see DECISIONS.md)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_procedure_building_permit
+
 run:  ## Run the API dev server (requires `make ingest` for real data)
 	cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
