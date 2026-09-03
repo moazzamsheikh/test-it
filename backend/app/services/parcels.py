@@ -28,6 +28,7 @@ from app.schemas.parcel import (
 )
 from app.services.geometry_analysis import compute_frontage_m, compute_neighbours
 from app.services.overlays import get_or_compute_overlays
+from app.services.pag_zoning import get_pag_zoning
 
 
 def _parcel_summary_query() -> Select[Any]:
@@ -134,6 +135,7 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
     overlay_results = await get_or_compute_overlays(session, row.id)
     frontage_m = await compute_frontage_m(session, row.id)
     neighbours = await compute_neighbours(session, row.id)
+    pag_zoning = await get_pag_zoning(session, row.id)
     constraints = [
         OverlayConstraint(
             layer_code=result.layer_code,
@@ -166,5 +168,6 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
         constraints=constraints,
         frontage_m=frontage_m,
         neighbours=neighbours,
+        pag_zoning=pag_zoning,
         geometry_wgs84_geojson=json.loads(row.geometry_wgs84_geojson),
     )

@@ -46,5 +46,8 @@ ingest: seed-reference ingest-parcels ingest-addresses  ## Rebuild the full M1 c
 ingest-procedures:  ## Ingest the M5 building-permit procedure guide (separate from M1 — see DECISIONS.md)
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_procedure_building_permit
 
+ingest-pag-zones:  ## Ingest M2 real PAG/PAP zoning for the target communes (requires make ingest first)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_pag_zones
+
 run:  ## Run the API dev server (requires `make ingest` for real data)
 	cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000

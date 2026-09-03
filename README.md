@@ -4,17 +4,20 @@ Spatial + regulatory data platform for architects: given a Luxembourg cadastral
 parcel, resolve the regulations that apply to it and answer questions about it
 with citations to official sources.
 
-> **Status: M1.1-M1.5 are real and working together; M5 has one genuine, scoped-down slice.**
+> **Status: M1.1-M1.5 are real and working together; M2 has a real PAG/PAP zoning slice; M5 has one genuine, scoped-down slice.**
 > Open the map, click a parcel or search an address, see a real Wiltz/Luxembourg
 > City parcel with its geometry highlighted, its regulatory overlays (PAG
-> zoning, Natura 2000, flood zones, servitudes, etc.), and its geometry analysis
+> zoning, Natura 2000, flood zones, servitudes, etc.), its geometry analysis
 > (road frontage, nearby-parcel distances, LiDAR-derived slope, a
-> manual-setback buildable envelope) — verified in a real browser, not just
-> curl. The side panel also shows one real, citation-backed government
-> procedure (building-permit application) — a structured display, explicitly
-> not a chatbot; M2 (legislation ingestion) and M3 (retrieval/chatbot) do not
-> exist yet, and M5 proper depends on both. This README describes what
-> actually runs today, not what is planned — see [Roadmap](#roadmap).
+> manual-setback buildable envelope), and its **real PAG/PAP zone
+> classification** — resolved via an actual spatial join against ACT's own
+> per-commune PAG data, with the real regulatory article text, not a WMS
+> point-sample — verified in a real browser, not just curl. The side panel
+> also shows one real, citation-backed government procedure (building-permit
+> application) — a structured display, explicitly not a chatbot. National
+> legislation ingestion and retrieval/chatbot (M3) do not exist yet, and M5
+> proper depends on M3. This README describes what actually runs today, not
+> what is planned — see [Roadmap](#roadmap).
 
 ---
 
@@ -33,9 +36,10 @@ with citations to official sources.
 | M1.4 regulatory overlays — 18 real WMS layers, per-parcel cached intersects | ✅ |
 | M1.5 geometry analysis — road frontage, neighbour distances, LiDAR slope, manual-setback buildable envelope | ✅ |
 | M5 (partial) — one real procedure (building permit), citation-backed, not a chatbot | ✅ |
-| 36 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
+| M2 (partial) — real PAG/PAP zoning for both target communes, real spatial join, real regulation text | ✅ |
+| 40 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
 | `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
-| M2 ingestion (legislation, PAG/PAP/bylaws) · M3 chatbot · M4 report/PDF | ⛔ not started |
+| M2 (legislation ingestion) · M3 chatbot · M4 report/PDF | ⛔ not started |
 
 ---
 
@@ -300,9 +304,20 @@ frontend/
   exhaustively across the full 1437-layer geoportail theme tree — neither
   exists as a real, distinct layer there (see SOURCES.md).
 - **Buildable envelope uses a single manual uniform setback, not real PAG/PAP
-  values.** National/commune legislation ingestion (M2) hasn't started, so
-  setback values aren't reliably extractable yet — the brief's own explicit
-  escape hatch for this exact gap (see DECISIONS.md).
+  values.** The real per-zone coefficient tables now exist in ingested
+  document text (see M2 below) but aren't parsed into structured setback
+  fields yet — the brief's own explicit escape hatch for this exact gap
+  applies until that parsing exists (see DECISIONS.md).
+- **Real PAG/PAP zoning is genuinely partial in the source data.** After
+  ingesting both target communes' real PAG datasets and fixing a real
+  axis-order bug (Wiltz's export specifically), zone coverage is 65.0%
+  (Luxembourg City) / 53.8% (Wiltz) of real parcels — confirmed against the
+  live geoportail WMS that this is a real gap in the *downloadable* dataset
+  (not our parsing), consistent with an in-progress PAG revision for
+  Luxembourg City (see DECISIONS.md). An uncovered parcel gets an honest
+  empty result, not a fabricated zone. PAP QE's graphic-part PDFs (~250MB,
+  no text extraction planned yet) are referenced by filename only, not
+  ingested as documents.
 - **No declared/legal area source found.** PCN's `PARCELLES` layer has no
   area field at all; `area_declared_m2` is always `null` until a source is
   found (see DECISIONS.md) — never fabricated.
@@ -314,10 +329,10 @@ frontend/
 - **Address search doesn't cover FR/DE/LB street-name variants** beyond a
   small abbreviation table — real alias data (CACLR's `ALIAS.RUE`) isn't
   ingested yet.
-- No ingestion of legislation, PAG/PAP/bylaws, retrieval, or report logic yet
-  (M2-M4). M5 has exactly one real procedure ingested (building permit) — a
-  structured display, not a chatbot/retrieval system; a second procedure or
-  multi-document search needs M2/M3 first.
+- No ingestion of national legislation, building bylaws, retrieval, or report
+  logic yet (the rest of M2, M3, M4). M5 has exactly one real procedure
+  ingested (building permit) — a structured display, not a chatbot/retrieval
+  system; a second procedure or multi-document search needs M3 first.
 - Migrations/ingestion/API are run from a host virtualenv (`backend/.venv`); a
   containerised backend service and `make demo` (seeded small dataset) land
   later.
@@ -343,11 +358,21 @@ frontend/
    (building permit), no spec text available for M5 (unlike M1.4/M1.5),
    scoped to avoid the M2/M3 dependency. Honestly labelled as a structured
    document display, not a chatbot — see DECISIONS.md.
-4. **M2 — Ingestion & provenance**: national legislation via the Legilux SPARQL
-   endpoint (in-force versions only), the two communes' PAG/PAP/building bylaws,
-   idempotent + incremental pipeline, status dashboard.
-5. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
-6. **M5, completed** — a real multi-procedure, retrieval-backed assistant once
+4. ~~**M2 — PAG/PAP zoning**~~ ⚠️ partial, per a real requirement dictated via
+   video (not the assessment PDF — see `PAG_PAP_SPEC.md`): real per-commune
+   PAG open data (GML + DOCX) for both target communes, ingested via a real
+   spatial join, resolving each parcel's actual zone and citing the real
+   regulation text — not the M1.4 WMS point-sample, which has no
+   classification attribute at all. Two real, documented gaps: PAG zone
+   coverage is genuinely partial in the source data itself (65%/54% of real
+   parcels, confirmed against the live WMS, not a parsing bug — see
+   DECISIONS.md), and PAP QE's graphic-part PDFs aren't ingested yet
+   (filename reference only).
+5. **M2 — the rest**: national legislation via the Legilux SPARQL endpoint
+   (in-force versions only), building bylaws, idempotent + incremental
+   pipeline, status dashboard.
+6. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
+7. **M5, completed** — a real multi-procedure, retrieval-backed assistant once
    M3 exists; only if time remains.
 
 Deliverables to accompany the code: `SOURCES.md`, `SCALING.md`, `EVAL.md`, and a

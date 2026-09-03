@@ -76,6 +76,31 @@ export interface SlopeResult {
   source_url: string;
 }
 
+export interface DocumentReference {
+  title: string;
+  source_url: string;
+  article_ref: string | null;
+  text: string | null;
+}
+
+export interface PagZoneMatch {
+  category: string;
+  genre: string | null;
+  overlap_m2: number;
+  document: DocumentReference | null;
+}
+
+export interface PapQeZoneMatch {
+  overlap_m2: number;
+  written_document: DocumentReference | null;
+  graphic_document_filename: string | null;
+}
+
+export interface PagZoningInfo {
+  pag_zones: PagZoneMatch[];
+  pap_qe_zones: PapQeZoneMatch[];
+}
+
 export interface ProcedureSectionInfo {
   heading: string;
   text: string;
@@ -112,6 +137,9 @@ export interface ParcelDetail extends ParcelSummary {
   constraints: OverlayConstraint[];
   frontage_m: number;
   neighbours: NeighbourDistance[];
+  // M2 — real PAG/PAP zoning from ACT's own per-commune open data, not the
+  // M1.4 WMS point-sample (which has no classification attribute at all).
+  pag_zoning: PagZoningInfo;
   // Passed straight through to ol/format/GeoJSON, which accepts any raw
   // GeoJSON object — no need for full GeoJSON types here.
   geometry_wgs84_geojson: Record<string, unknown>;

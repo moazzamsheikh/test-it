@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getBuildableEnvelope, getBuildingPermitProcedure, getParcelSlope } from "@/lib/api";
 import type {
   BuildableEnvelope,
+  PagZoningInfo,
   ParcelDetail,
   ParcelSummary,
   ProcedureDetail,
@@ -144,6 +145,8 @@ export default function ParcelPanel({
         parcel={parcel}
         onEnvelopeChange={onEnvelopeChange}
       />
+
+      <PagZoningSection pagZoning={parcel.pag_zoning} />
 
       <ConstraintsSection constraints={parcel.constraints} />
 
@@ -404,6 +407,86 @@ function ProcedureSection() {
           ))}
         </ul>
       </details>
+    </div>
+  );
+}
+
+function PagZoningSection({ pagZoning }: { pagZoning: PagZoningInfo }) {
+  const { pag_zones: pagZones, pap_qe_zones: papQeZones } = pagZoning;
+
+  if (pagZones.length === 0 && papQeZones.length === 0) {
+    return (
+      <div className="border-t border-zinc-200 pt-3">
+        <h3 className="text-sm font-semibold text-zinc-700">PAG/PAP zoning</h3>
+        <p className="mt-1 text-xs text-zinc-500">
+          No zone found for this parcel in the ingested PAG data — a real,
+          confirmed gap in the current source dataset for some areas, not an
+          error (see DECISIONS.md).
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-zinc-200 pt-3">
+      <h3 className="text-sm font-semibold text-zinc-700">PAG/PAP zoning</h3>
+      <p className="mt-1 text-xs text-zinc-400">
+        Real zone classification from ACT&apos;s own PAG data, reported
+        exactly as found — including surprising results.
+      </p>
+
+      {pagZones.map((zone) => (
+        <div
+          key={`${zone.category}-${zone.genre ?? ""}`}
+          className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2"
+        >
+          <div className="text-sm font-medium text-amber-900">
+            {zone.category}
+            {zone.genre && ` (${zone.genre})`} — {zone.overlap_m2.toFixed(1)} m² overlap
+          </div>
+          {zone.document && (
+            <details className="mt-1">
+              <summary className="cursor-pointer text-xs text-amber-800">
+                {zone.document.article_ref ?? zone.document.title}
+              </summary>
+              {zone.document.text && (
+                <p className="mt-1 text-xs whitespace-pre-line text-zinc-700">
+                  {zone.document.text}
+                </p>
+              )}
+            </details>
+          )}
+        </div>
+      ))}
+
+      {papQeZones.map((zone, i) => (
+        <div
+          key={i}
+          className="mt-2 rounded-md border border-blue-200 bg-blue-50 p-2"
+        >
+          <div className="text-sm font-medium text-blue-900">
+            PAP Quartier Existant — {zone.overlap_m2.toFixed(1)} m² overlap
+          </div>
+          {zone.written_document && (
+            <details className="mt-1">
+              <summary className="cursor-pointer text-xs text-blue-800">
+                {zone.written_document.article_ref ?? zone.written_document.title}
+              </summary>
+              {zone.written_document.text && (
+                <p className="mt-1 text-xs whitespace-pre-line text-zinc-700">
+                  {zone.written_document.text}
+                </p>
+              )}
+            </details>
+          )}
+          {zone.graphic_document_filename && (
+            <p className="mt-1 text-[11px] text-zinc-500">
+              Graphic plan reference: {zone.graphic_document_filename} (not
+              extracted yet — see DECISIONS.md)
+            </p>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

@@ -6,6 +6,8 @@ import uuid
 
 from pydantic import BaseModel
 
+from app.schemas.pag import PagZoningInfo
+
 
 class AddressSummary(BaseModel):
     id: uuid.UUID
@@ -88,6 +90,11 @@ class ParcelDetail(ParcelSummary):
     # direct road access) and nearby non-road parcels with true distances.
     frontage_m: float
     neighbours: list[NeighbourDistance]
+    # M2 — real PAG/PAP zoning from ACT's actual per-commune open data (see
+    # PAG_PAP_SPEC.md), not the M1.4 WMS point-sample (which has no
+    # classification attribute at all — see DECISIONS.md). Reported exactly
+    # as the real data says, including surprising results.
+    pag_zoning: PagZoningInfo
     geometry_wgs84_geojson: dict[str, object]
 
 
