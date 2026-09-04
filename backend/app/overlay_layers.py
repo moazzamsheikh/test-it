@@ -5,9 +5,19 @@ Every layer here was verified against a live GetMap/GetFeatureInfo request
 before being added (see SOURCES.md / DECISIONS.md) — the numeric `wms_layer_id`
 is NOT the friendly name shown in the official geoportail.lu client; it's the
 theme config's own `"layers"` field, discovered by reading that config, not
-guessed. Two spec categories (zone verte, HV electricity easements) have no
-real layer anywhere in the 1437-layer tree we searched — left out rather than
-mapped to something wrong; see SOURCES.md.
+guessed.
+
+Two spec categories have no standalone WMS layer anywhere in the 1437-layer
+tree we searched — left out of this config rather than mapped to something
+wrong. One is now resolved anyway, not from this file: "zone verte" is
+computed in `app/services/pag_zoning.py::derive_m14_style_constraints` from
+the real M2 PAG `ZONAGE` data (the government's own PAG legend groups four
+real zone categories under that heading — see DECISIONS.md/SOURCES.md).
+"PAP NQ / PAP QE perimeters" is similarly derived there from M2's `ZONES_QE`/
+`NQ_PAP` data, in addition to (not instead of) `pap_approuves` below, which
+covers only individually *approved* PAP projects, a narrower real thing.
+HV electricity easements remain a genuine gap — no such layer exists on this
+public service at all (see SOURCES.md).
 """
 
 from __future__ import annotations

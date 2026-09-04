@@ -169,13 +169,22 @@ private data — it's the public client's own public config).
 | High-pressure gas | `gaz_naturel` | 1494 | yes |
 
 **17 layers found real and named; 12+ confirmed queryable** — comfortably past
-the ≥10 requirement. Two genuine gaps, not forced with a wrong match:
-- **Zone verte** — no standalone layer exists anywhere in the 1437-layer tree
-  (searched exhaustively for "vert"/"vergrünt" etc.). Zone verte is legally
-  defined (Art. 6, loi protection de la nature) as land *outside* PAG building
-  perimeters — it may need to be derived as PAG's spatial complement rather
-  than fetched as its own overlay. Not attempted yet.
-- **HV electricity easements** — no layer found (searched "electr", "haute_tension",
-  "HT"). `gaz_naturel` covers the gas half of that spec line; the electricity
-  half may not be published on this public service at all (Creos, the grid
-  operator, may not expose it here).
+the ≥10 requirement. One genuine gap, not forced with a wrong match, plus one
+resolved after M2's real PAG data made it derivable:
+- **Zone verte — RESOLVED via M2 (see DECISIONS.md).** No standalone WMS layer
+  exists anywhere in the 1437-layer tree (searched exhaustively for
+  "vert"/"vergrünt" etc.), confirming the original suspicion above that this
+  needed to be *derived*, not fetched. Once M2's real PAG `ZONAGE` data was
+  ingested, the government's own PAG legend (GetLegendGraphic for layer 698)
+  turned out to group exactly four real ZONAGE categories under a "Zone verte"
+  heading: `AGR` (agricole), `FOR` (forestière), `PARC` (parc public), `VERD`
+  (verdure) — consistent with the legal definition (Art. 6, loi protection de
+  la nature) as land outside PAG building perimeters. `app/services/pag_zoning.py::derive_m14_style_constraints`
+  computes this exactly (a parcel is "zone verte" iff any of its real ingested
+  `ZONAGE` polygons has `category` in that set) — more precisely than the WMS
+  point-sampling used for the other 17 layers, since it's an exact polygon
+  intersection against every real zone, not a handful of sample points.
+- **HV electricity easements — still a genuine gap.** No layer found (searched
+  "electr", "haute_tension", "HT"). `gaz_naturel` covers the gas half of that
+  spec line; the electricity half may not be published on this public service
+  at all (Creos, the grid operator, may not expose it here).

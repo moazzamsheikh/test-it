@@ -28,7 +28,7 @@ from app.schemas.parcel import (
 )
 from app.services.geometry_analysis import compute_frontage_m, compute_neighbours
 from app.services.overlays import get_or_compute_overlays
-from app.services.pag_zoning import get_pag_zoning
+from app.services.pag_zoning import derive_m14_style_constraints, get_pag_zoning
 
 
 def _parcel_summary_query() -> Select[Any]:
@@ -148,6 +148,10 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
         )
         for result in overlay_results
     ]
+    # "zone verte" and "PAP NQ/QE perimeters" are named in the M1.4 overlay
+    # list but aren't separate WMS layers (see DECISIONS.md) — derived here
+    # from the real M2 PAG data already fetched above, at no extra query cost.
+    constraints += derive_m14_style_constraints(pag_zoning, row.admin_commune_code)
 
     return ParcelDetail(
         cadastral_id=row.cadastral_id,

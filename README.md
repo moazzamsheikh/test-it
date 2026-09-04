@@ -34,11 +34,11 @@ with citations to official sources.
 | M1.2 address search API — trigram fuzzy match, sub-15ms warm (see below) | ✅ |
 | M1.3 parcel identify (by click, by cadastral reference) + full detail API | ✅ |
 | M1.1 map UI — Next.js + OpenLayers, 3 real switchable WMS base layers, click-to-identify, address search, side panel | ✅ |
-| M1.4 regulatory overlays — 18 real WMS layers, per-parcel cached intersects | ✅ |
+| M1.4 regulatory overlays — 18 real WMS layers + 3 derived from M2 (zone verte, PAP NQ/QE perimeters), 21 total, per-parcel intersects | ✅ |
 | M1.5 geometry analysis — road frontage, neighbour distances, LiDAR slope, manual-setback buildable envelope | ✅ |
 | M5 (partial) — one real procedure (building permit), citation-backed, not a chatbot | ✅ |
 | M2 (partial) — real PAG/PAP zoning + real COS/CUS/CSS/DL coefficients for both target communes | ✅ |
-| 41 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
+| 44 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
 | `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
 | M2 (legislation ingestion) · M3 chatbot · M4 report/PDF | ⛔ not started |
 
@@ -301,9 +301,11 @@ frontend/
 
 ## Current limitations (honest status)
 
-- **No zone_verte or HV electricity easement overlay layer.** Searched
-  exhaustively across the full 1437-layer geoportail theme tree — neither
-  exists as a real, distinct layer there (see SOURCES.md).
+- **No HV electricity easement overlay layer.** Searched exhaustively across
+  the full 1437-layer geoportail theme tree — doesn't exist as a real,
+  distinct layer there (see SOURCES.md). `zone_verte` was in the same
+  position (no standalone WMS layer either) until M2's real PAG data made it
+  derivable — see the M1.4/M2 status below.
 - **Buildable envelope (M1.5) still uses a single manual uniform setback, not
   a real extracted value.** Real COS/CUS/CSS/DL planning coefficients (max
   footprint ratio, floor area ratio, soil-sealing ratio, dwelling density)
@@ -352,7 +354,10 @@ frontend/
 
 1. ~~**M1.4 — Regulatory overlays**~~ ✅ done — 18 real thematic WMS layers
    (PAG, Natura 2000, flood zones, servitudes, etc.), config-driven, cached
-   per-parcel intersects.
+   per-parcel intersects, plus 2 of the brief's named categories (zone
+   verte, PAP NQ/QE perimeters) derived from M2's real PAG data once that
+   existed — see DECISIONS.md. Only HV electricity easements remain a
+   genuine gap (no such public layer exists at all).
 2. ~~**M1.5 — Geometry analysis**~~ ✅ done (stretch, per the brief itself) —
    road frontage, neighbour distances, LiDAR-derived slope, manual-setback
    buildable envelope.
