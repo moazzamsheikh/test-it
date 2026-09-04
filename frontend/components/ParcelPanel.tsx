@@ -411,10 +411,18 @@ function ProcedureSection() {
   );
 }
 
-function PagZoningSection({ pagZoning }: { pagZoning: PagZoningInfo }) {
-  const { pag_zones: pagZones, pap_qe_zones: papQeZones } = pagZoning;
+function formatMinMax(min: number | null, max: number | null): string | null {
+  if (min === null && max === null) return null;
+  if (min === null) return `≤ ${max}`;
+  if (max === null) return `≥ ${min}`;
+  if (min === max) return `${min}`;
+  return `${min} – ${max}`;
+}
 
-  if (pagZones.length === 0 && papQeZones.length === 0) {
+function PagZoningSection({ pagZoning }: { pagZoning: PagZoningInfo }) {
+  const { pag_zones: pagZones, pap_qe_zones: papQeZones, pap_nq_zones: papNqZones } = pagZoning;
+
+  if (pagZones.length === 0 && papQeZones.length === 0 && papNqZones.length === 0) {
     return (
       <div className="border-t border-zinc-200 pt-3">
         <h3 className="text-sm font-semibold text-zinc-700">PAG/PAP zoning</h3>
@@ -435,11 +443,11 @@ function PagZoningSection({ pagZoning }: { pagZoning: PagZoningInfo }) {
         exactly as found — including surprising results.
       </p>
 
-      {pagZones.map((zone) => (
-        <div
-          key={`${zone.category}-${zone.genre ?? ""}`}
-          className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2"
-        >
+      {pagZones.map((zone, i) => (
+        // A parcel can genuinely span several separately-digitized polygons
+        // of the same category (e.g. multiple real "FOR" fragments) — index
+        // is the only safe key, category+genre isn't guaranteed unique.
+        <div key={i} className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-2">
           <div className="text-sm font-medium text-amber-900">
             {zone.category}
             {zone.genre && ` (${zone.genre})`} — {zone.overlap_m2.toFixed(1)} m² overlap
@@ -482,6 +490,61 @@ function PagZoningSection({ pagZoning }: { pagZoning: PagZoningInfo }) {
           {zone.graphic_document_filename && (
             <p className="mt-1 text-[11px] text-zinc-500">
               Graphic plan reference: {zone.graphic_document_filename} (not
+              extracted yet — see DECISIONS.md)
+            </p>
+          )}
+        </div>
+      ))}
+
+      {papNqZones.map((zone, i) => (
+        <div key={i} className="mt-2 rounded-md border border-green-200 bg-green-50 p-2">
+          <div className="text-sm font-medium text-green-900">
+            PAP Nouveau Quartier{zone.denomination && ` — ${zone.denomination}`}
+          </div>
+          <div className="mt-1 text-xs text-zinc-500">
+            {zone.overlap_m2.toFixed(1)} m² overlap
+          </div>
+          <dl className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-zinc-700">
+            {formatMinMax(zone.cos_min, zone.cos_max) && (
+              <>
+                <dt className="text-zinc-500">COS (footprint ratio)</dt>
+                <dd>{formatMinMax(zone.cos_min, zone.cos_max)}</dd>
+              </>
+            )}
+            {formatMinMax(zone.cus_min, zone.cus_max) && (
+              <>
+                <dt className="text-zinc-500">CUS (floor area ratio)</dt>
+                <dd>{formatMinMax(zone.cus_min, zone.cus_max)}</dd>
+              </>
+            )}
+            {zone.css_max !== null && (
+              <>
+                <dt className="text-zinc-500">CSS max (soil sealing)</dt>
+                <dd>{zone.css_max}</dd>
+              </>
+            )}
+            {formatMinMax(zone.dl_min, zone.dl_max) && (
+              <>
+                <dt className="text-zinc-500">DL (units/ha)</dt>
+                <dd>{formatMinMax(zone.dl_min, zone.dl_max)}</dd>
+              </>
+            )}
+          </dl>
+          {zone.written_document && (
+            <details className="mt-1">
+              <summary className="cursor-pointer text-xs text-green-800">
+                {zone.written_document.article_ref ?? zone.written_document.title}
+              </summary>
+              {zone.written_document.text && (
+                <p className="mt-1 text-xs whitespace-pre-line text-zinc-700">
+                  {zone.written_document.text}
+                </p>
+              )}
+            </details>
+          )}
+          {zone.schema_directeur_filename && (
+            <p className="mt-1 text-[11px] text-zinc-500">
+              Schéma directeur reference: {zone.schema_directeur_filename} (not
               extracted yet — see DECISIONS.md)
             </p>
           )}

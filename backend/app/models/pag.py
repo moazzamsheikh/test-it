@@ -20,7 +20,7 @@ import uuid
 from datetime import datetime
 
 from geoalchemy2 import Geometry, WKBElement
-from sqlalchemy import ForeignKey, Index, Text, func
+from sqlalchemy import ForeignKey, Index, Numeric, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -69,6 +69,56 @@ class PapQeZone(Base):
     # the real filename the GML itself references, honest about the gap
     # rather than pretending it's a resolved citation.
     graphic_document_filename: Mapped[str | None] = mapped_column(Text, default=None)
+    geom: Mapped[WKBElement] = mapped_column(Geometry(geometry_type="MULTIPOLYGON", srid=2169))
+    source_url: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class PapNqZone(Base):
+    """One real NQ_PAP polygon (PAP "Nouveau Quartier" — a not-yet-built
+    zone requiring its own particular development plan before construction)
+    from ACT's PAG GML export.
+
+    Unlike PAG/PAP QE's regulation text, the real planning coefficients
+    (COS/CUS/CSS/DL — the numeric limits a real architect needs to compute
+    buildable floor area, footprint, and unit count) are genuine GIS
+    attributes here, not something that needs parsing out of a document's
+    prose/tables — verified live against real Luxembourg City and Wiltz
+    data (see DECISIONS.md). `css_min` doesn't exist as a field in the real
+    data (only a max — there's no minimum soil-sealing requirement), so it's
+    intentionally not modelled here.
+    """
+
+    __tablename__ = "pap_nq_zones"
+    __table_args__ = (Index("ix_pap_nq_zones_admin_commune", "admin_commune_code"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    admin_commune_code: Mapped[str] = mapped_column(
+        ForeignKey("communes.lau2_code", ondelete="RESTRICT")
+    )
+    denomination: Mapped[str | None] = mapped_column(Text, default=None)
+    genre: Mapped[str | None] = mapped_column(Text, default=None)
+    # COS — Coefficient d'Occupation du Sol (ground footprint ratio)
+    cos_min: Mapped[float | None] = mapped_column(Numeric(asdecimal=False), default=None)
+    cos_max: Mapped[float | None] = mapped_column(Numeric(asdecimal=False), default=None)
+    # CUS — Coefficient d'Utilisation du Sol (floor area ratio)
+    cus_min: Mapped[float | None] = mapped_column(Numeric(asdecimal=False), default=None)
+    cus_max: Mapped[float | None] = mapped_column(Numeric(asdecimal=False), default=None)
+    # CSS — Coefficient de Scellement du Sol (soil-sealing / imperviousness ratio)
+    css_max: Mapped[float | None] = mapped_column(Numeric(asdecimal=False), default=None)
+    # DL — Densité de Logement (dwelling units per hectare)
+    dl_min: Mapped[float | None] = mapped_column(Numeric(asdecimal=False), default=None)
+    dl_max: Mapped[float | None] = mapped_column(Numeric(asdecimal=False), default=None)
+    written_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("documents.id", ondelete="SET NULL"), default=None
+    )
+    # The schéma directeur (master plan) written/graphic parts are real PDFs
+    # per NQ project — not fetched/parsed this pass (see DECISIONS.md): the
+    # coefficients above are the actual numbers a NQ project needs, already
+    # real GIS attributes, so PDF text extraction isn't required to answer
+    # "what are COS/CUS/CSS/DL here" — only to read the full narrative text.
+    schema_directeur_filename: Mapped[str | None] = mapped_column(Text, default=None)
+    schema_directeur_graphic_filename: Mapped[str | None] = mapped_column(Text, default=None)
     geom: Mapped[WKBElement] = mapped_column(Geometry(geometry_type="MULTIPOLYGON", srid=2169))
     source_url: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

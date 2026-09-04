@@ -151,20 +151,38 @@ Art.19 legal text — see DECISIONS.md for why that's a genuine result, not a bu
   doesn't) to be a genuine gap in the *source* dataset, not our parsing. Reported as an
   honest empty result, not hidden or patched — see DECISIONS.md.
 
-**Still open / deliberately deferred:**
+## RESOLVED (2026-09-03): the COS/CUS/CSS/DL coefficients
+
+Prompted by a direct follow-up question ("retrieve the information for CUS, COS, CSS,
+DL for a given PAP NQ"). This turned out **not** to need the DOCX-table parsing
+originally assumed above — `NQ_PAP` ("Nouveau Quartier", not-yet-built zones) carries
+these as genuine, populated GIS attributes: `COS_MIN`/`COS_MAX`, `CUS_MIN`/`CUS_MAX`,
+`CSS_MAX` only (no `CSS_MIN` exists in the real data — no minimum soil-sealing
+requirement), `DL_MIN`/`DL_MAX`. Verified live for both target communes — e.g. a real
+Weimershof zone: COS≤0.6, CUS≤1.25, CSS≤0.8, DL≤115, matching the video's example
+numbers ("0.3, 0.5, 0.6, 20"-style) almost exactly. Implemented as a new `pap_nq_zones`
+table, ingested and spatially joined the same way as `pag_zones`/`pap_qe_zones` — see
+DECISIONS.md. The zone's shared written regulation (`NOM_FICHIER_EC` — one generic
+document per commune, not per-zone) is ingested and cited; the per-project schéma-
+directeur PDF (`NOM_FICHIER_SD_EC`/`NOM_FICHIER_SD_GR`) remains a filename reference
+only, same deliberate scope limit as PAP QE's graphic parts — the coefficients
+themselves don't need it, only the fuller narrative text would.
+
+## Still open / deliberately deferred
+
 - Whether "the graphic part" should be served as the full source PDF/image, or a cropped
   excerpt around the parcel — not decided yet. PAP QE's graphic PDFs (`NOM_FICHIER_GR`)
-  aren't fetched at all yet (~250MB for Luxembourg City alone, no text extraction
-  planned) — `PapQeZone.graphic_document_filename` stores the real filename reference
-  only.
+  and NQ's schéma-directeur PDFs aren't fetched at all yet (~250MB for Luxembourg City's
+  PAP QE graphics alone, no text extraction planned) — stored as real filename
+  references only.
 - `ZONES_SUPERPOSEES` (overlay constraints, 874 features in Luxembourg City's file) and
-  `NQ_PAP`/`PAP_APPROUVE` haven't had their own attribute schemas inspected or ingested —
-  only `ZONAGE` and `ZONES_QE` are implemented.
-- The DOCX table format (schéma-directeur → percentage) was only verified for one zone
-  (`MIX_u`); other zone categories' documents may structure their coefficient tables
-  differently. The raw table text is captured verbatim in every ingested document's
-  chunk, but not parsed into structured per-zone setback/coefficient fields yet — the
-  buildable-envelope feature (M1.5) still uses a manual setback input as a result.
+  `PAP_APPROUVE` haven't had their own attribute schemas inspected or ingested —
+  `ZONAGE`, `ZONES_QE`, and `NQ_PAP` are now implemented; these two aren't.
+- The DOCX table format for PAP QE's own per-sub-variant overrides (schéma-directeur →
+  percentage, as opposed to NQ_PAP's clean GIS attributes) was only verified for one
+  zone (`MIX_u`); other zone categories' documents may structure their tables
+  differently. That raw table text is captured verbatim in every ingested document's
+  chunk, but not parsed into structured fields yet.
 
 ## How this maps to existing phases
 

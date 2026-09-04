@@ -11,7 +11,8 @@ with citations to official sources.
 > (road frontage, nearby-parcel distances, LiDAR-derived slope, a
 > manual-setback buildable envelope), and its **real PAG/PAP zone
 > classification** — resolved via an actual spatial join against ACT's own
-> per-commune PAG data, with the real regulatory article text, not a WMS
+> per-commune PAG data, with the real regulatory article text (and real
+> COS/CUS/CSS/DL planning coefficients for not-yet-built zones), not a WMS
 > point-sample — verified in a real browser, not just curl. The side panel
 > also shows one real, citation-backed government procedure (building-permit
 > application) — a structured display, explicitly not a chatbot. National
@@ -36,8 +37,8 @@ with citations to official sources.
 | M1.4 regulatory overlays — 18 real WMS layers, per-parcel cached intersects | ✅ |
 | M1.5 geometry analysis — road frontage, neighbour distances, LiDAR slope, manual-setback buildable envelope | ✅ |
 | M5 (partial) — one real procedure (building permit), citation-backed, not a chatbot | ✅ |
-| M2 (partial) — real PAG/PAP zoning for both target communes, real spatial join, real regulation text | ✅ |
-| 40 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
+| M2 (partial) — real PAG/PAP zoning + real COS/CUS/CSS/DL coefficients for both target communes | ✅ |
+| 41 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
 | `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
 | M2 (legislation ingestion) · M3 chatbot · M4 report/PDF | ⛔ not started |
 
@@ -303,11 +304,13 @@ frontend/
 - **No zone_verte or HV electricity easement overlay layer.** Searched
   exhaustively across the full 1437-layer geoportail theme tree — neither
   exists as a real, distinct layer there (see SOURCES.md).
-- **Buildable envelope uses a single manual uniform setback, not real PAG/PAP
-  values.** The real per-zone coefficient tables now exist in ingested
-  document text (see M2 below) but aren't parsed into structured setback
-  fields yet — the brief's own explicit escape hatch for this exact gap
-  applies until that parsing exists (see DECISIONS.md).
+- **Buildable envelope (M1.5) still uses a single manual uniform setback, not
+  a real extracted value.** Real COS/CUS/CSS/DL planning coefficients (max
+  footprint ratio, floor area ratio, soil-sealing ratio, dwelling density)
+  are now available for `NQ_PAP` zones as genuine structured data (see M2
+  below) — but those are area/density limits, not a linear setback distance,
+  so they don't replace this input; the brief's own explicit manual-input
+  escape hatch still applies here (see DECISIONS.md).
 - **Real PAG/PAP zoning is genuinely partial in the source data.** After
   ingesting both target communes' real PAG datasets and fixing a real
   axis-order bug (Wiltz's export specifically), zone coverage is 65.0%
@@ -363,11 +366,14 @@ frontend/
    PAG open data (GML + DOCX) for both target communes, ingested via a real
    spatial join, resolving each parcel's actual zone and citing the real
    regulation text — not the M1.4 WMS point-sample, which has no
-   classification attribute at all. Two real, documented gaps: PAG zone
-   coverage is genuinely partial in the source data itself (65%/54% of real
-   parcels, confirmed against the live WMS, not a parsing bug — see
-   DECISIONS.md), and PAP QE's graphic-part PDFs aren't ingested yet
-   (filename reference only).
+   classification attribute at all. Also real COS/CUS/CSS/DL planning
+   coefficients (footprint ratio, floor area ratio, soil-sealing ratio,
+   dwelling density) for `NQ_PAP` ("Nouveau Quartier") zones — genuine GIS
+   attributes, not parsed from document text. Real, documented gaps: PAG
+   zone coverage is genuinely partial in the source data itself (65%/54% of
+   real parcels, confirmed against the live WMS, not a parsing bug — see
+   DECISIONS.md); PAP QE's graphic-part PDFs and NQ's per-project schéma-
+   directeur PDFs aren't ingested yet (filename reference only).
 5. **M2 — the rest**: national legislation via the Legilux SPARQL endpoint
    (in-force versions only), building bylaws, idempotent + incremental
    pipeline, status dashboard.

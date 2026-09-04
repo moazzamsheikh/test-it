@@ -12,7 +12,7 @@ from app.models.cadastre import (
     ParcelNature,
 )
 from app.models.overlays import ParcelOverlayResult
-from app.models.pag import PagZone, PapQeZone
+from app.models.pag import PagZone, PapNqZone, PapQeZone
 from app.models.provenance import Chunk, Document, Source
 from app.models.slope import ParcelSlopeResult
 
@@ -26,6 +26,7 @@ __all__ = [
     "Commune",
     "Document",
     "PagZone",
+    "PapNqZone",
     "PapQeZone",
     "Parcel",
     "ParcelBuilding",

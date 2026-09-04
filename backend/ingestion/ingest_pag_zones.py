@@ -1,7 +1,8 @@
-"""Ingest real PAG ZONAGE (base zones) and ZONES_QE (PAP "Quartier Existant"
-sub-zones) for the target communes, from ACT's real per-commune PAG open
-data (see PAG_PAP_SPEC.md for the research trail and DECISIONS.md for the
-design decisions this makes).
+"""Ingest real PAG ZONAGE (base zones), ZONES_QE (PAP "Quartier Existant"
+sub-zones), and NQ_PAP (PAP "Nouveau Quartier" — real COS/CUS/CSS/DL
+planning coefficients) for the target communes, from ACT's real per-commune
+PAG open data (see PAG_PAP_SPEC.md for the research trail and DECISIONS.md
+for the design decisions this makes).
 
 Run with: make ingest-pag-zones
 """
@@ -26,7 +27,7 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.models.cadastre import Parcel
 from app.models.enums import AccessMethod, DocumentType, Language, LegalStatus, SourceStatus
-from app.models.pag import PagZone, PapQeZone
+from app.models.pag import PagZone, PapNqZone, PapQeZone
 from app.models.provenance import Chunk, Document, Source
 from ingestion.config import PAG_ZIP_URLS, USER_AGENT
 from ingestion.gml_geometry import parse_gml_polygon
@@ -66,6 +67,59 @@ class _QeFeature:
         self.geom = geom
 
 
+class _NqPapFeature:
+    __slots__ = (
+        "denomination",
+        "genre",
+        "cos_min",
+        "cos_max",
+        "cus_min",
+        "cus_max",
+        "css_max",
+        "dl_min",
+        "dl_max",
+        "nom_fichier_ec",
+        "nom_fichier_sd_ec",
+        "nom_fichier_sd_gr",
+        "geom",
+    )
+
+    def __init__(
+        self,
+        *,
+        denomination: str | None,
+        genre: str | None,
+        cos_min: float | None,
+        cos_max: float | None,
+        cus_min: float | None,
+        cus_max: float | None,
+        css_max: float | None,
+        dl_min: float | None,
+        dl_max: float | None,
+        nom_fichier_ec: str | None,
+        nom_fichier_sd_ec: str | None,
+        nom_fichier_sd_gr: str | None,
+        geom: MultiPolygon,
+    ) -> None:
+        self.denomination = denomination
+        self.genre = genre
+        self.cos_min = cos_min
+        self.cos_max = cos_max
+        self.cus_min = cus_min
+        self.cus_max = cus_max
+        self.css_max = css_max
+        self.dl_min = dl_min
+        self.dl_max = dl_max
+        self.nom_fichier_ec = nom_fichier_ec
+        self.nom_fichier_sd_ec = nom_fichier_sd_ec
+        self.nom_fichier_sd_gr = nom_fichier_sd_gr
+        self.geom = geom
+
+
+def _parse_float(value: str | None) -> float | None:
+    return float(value) if value is not None else None
+
+
 def _parse_zonage(root: ET.Element) -> list[_ZonageFeature]:
     features = []
     for el in root.iter(f"{_GML_PAG_NS}ZONAGE"):
@@ -93,6 +147,36 @@ def _parse_zones_qe(root: ET.Element) -> list[_QeFeature]:
             _QeFeature(
                 nom_fichier_ec=el.findtext(f"{_GML_PAG_NS}NOM_FICHIER_EC"),
                 nom_fichier_gr=el.findtext(f"{_GML_PAG_NS}NOM_FICHIER_GR"),
+                geom=parse_gml_polygon(geometrie),
+            )
+        )
+    return features
+
+
+def _parse_nq_pap(root: ET.Element) -> list[_NqPapFeature]:
+    """NQ_PAP ("Nouveau Quartier") polygons carry the real planning
+    coefficients (COS/CUS/CSS/DL) as genuine GIS attributes — verified live
+    against both real communes (see DECISIONS.md) — not something requiring
+    PDF-table parsing to answer "what are the limits here"."""
+    features = []
+    for el in root.iter(f"{_GML_PAG_NS}NQ_PAP"):
+        geometrie = el.find(f"{_GML_PAG_NS}GEOMETRIE")
+        if geometrie is None:
+            continue
+        features.append(
+            _NqPapFeature(
+                denomination=el.findtext(f"{_GML_PAG_NS}DENOMINATION"),
+                genre=el.findtext(f"{_GML_PAG_NS}GENRE"),
+                cos_min=_parse_float(el.findtext(f"{_GML_PAG_NS}COS_MIN")),
+                cos_max=_parse_float(el.findtext(f"{_GML_PAG_NS}COS_MAX")),
+                cus_min=_parse_float(el.findtext(f"{_GML_PAG_NS}CUS_MIN")),
+                cus_max=_parse_float(el.findtext(f"{_GML_PAG_NS}CUS_MAX")),
+                css_max=_parse_float(el.findtext(f"{_GML_PAG_NS}CSS_MAX")),
+                dl_min=_parse_float(el.findtext(f"{_GML_PAG_NS}DL_MIN")),
+                dl_max=_parse_float(el.findtext(f"{_GML_PAG_NS}DL_MAX")),
+                nom_fichier_ec=el.findtext(f"{_GML_PAG_NS}NOM_FICHIER_EC"),
+                nom_fichier_sd_ec=el.findtext(f"{_GML_PAG_NS}NOM_FICHIER_SD_EC"),
+                nom_fichier_sd_gr=el.findtext(f"{_GML_PAG_NS}NOM_FICHIER_SD_GR"),
                 geom=parse_gml_polygon(geometrie),
             )
         )
@@ -224,11 +308,13 @@ def ingest_commune(
 
     zonage_features = _parse_zonage(root)
     qe_features = _parse_zones_qe(root)
+    nq_features = _parse_nq_pap(root)
     logger.info(
         "ingest.pag_zones.parsed",
         commune=commune_name,
         zonage=len(zonage_features),
         zones_qe=len(qe_features),
+        nq_pap=len(nq_features),
     )
 
     sample_geoms = [f.geom for f in zonage_features[:20] if f.geom is not None]
@@ -239,11 +325,14 @@ def ingest_commune(
             zonage_feature.geom = _swap_xy(zonage_feature.geom)
         for qe_feature in qe_features:
             qe_feature.geom = _swap_xy(qe_feature.geom)
+        for nq_feature in nq_features:
+            nq_feature.geom = _swap_xy(nq_feature.geom)
 
     source_id = _get_or_create_source(session, name=f"PAG {commune_name}", zip_url=zip_url)
 
     written_filenames = {f.nom_fichier for f in zonage_features if f.nom_fichier}
     written_filenames |= {f.nom_fichier_ec for f in qe_features if f.nom_fichier_ec}
+    written_filenames |= {f.nom_fichier_ec for f in nq_features if f.nom_fichier_ec}
 
     filename_to_document_id: dict[str, uuid.UUID] = {}
     missing_documents = []
@@ -266,6 +355,7 @@ def ingest_commune(
 
     session.execute(delete(PagZone).where(PagZone.admin_commune_code == admin_commune_code))
     session.execute(delete(PapQeZone).where(PapQeZone.admin_commune_code == admin_commune_code))
+    session.execute(delete(PapNqZone).where(PapNqZone.admin_commune_code == admin_commune_code))
 
     pag_values = [
         {
@@ -297,9 +387,34 @@ def ingest_commune(
     for batch in _batched(qe_values):
         session.execute(insert(PapQeZone).values(batch))
 
+    nq_values = [
+        {
+            "id": uuid.uuid4(),
+            "admin_commune_code": admin_commune_code,
+            "denomination": f.denomination,
+            "genre": f.genre,
+            "cos_min": f.cos_min,
+            "cos_max": f.cos_max,
+            "cus_min": f.cus_min,
+            "cus_max": f.cus_max,
+            "css_max": f.css_max,
+            "dl_min": f.dl_min,
+            "dl_max": f.dl_max,
+            "written_document_id": filename_to_document_id.get(f.nom_fichier_ec or ""),
+            "schema_directeur_filename": f.nom_fichier_sd_ec,
+            "schema_directeur_graphic_filename": f.nom_fichier_sd_gr,
+            "geom": from_shape(f.geom, srid=2169),
+            "source_url": zip_url,
+        }
+        for f in nq_features
+    ]
+    for batch in _batched(nq_values):
+        session.execute(insert(PapNqZone).values(batch))
+
     return {
         "zonage": len(pag_values),
         "zones_qe": len(qe_values),
+        "nq_pap": len(nq_values),
         "documents_ingested": len(filename_to_document_id),
     }
 

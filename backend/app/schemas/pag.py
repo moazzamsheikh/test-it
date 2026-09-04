@@ -36,6 +36,30 @@ class PapQeZoneMatch(BaseModel):
     graphic_document_filename: str | None
 
 
+class PapNqZoneMatch(BaseModel):
+    """One real NQ_PAP polygon (PAP "Nouveau Quartier" — not yet built)
+    intersecting the parcel. COS/CUS/CSS/DL are real GIS attributes, not
+    parsed from document text — verified live for both target communes
+    (see DECISIONS.md). `css_min` doesn't exist in the real data (only a
+    max), so there's no field for it. Schéma-directeur filenames are real
+    references only — their PDF content isn't ingested yet."""
+
+    denomination: str | None
+    genre: str | None
+    cos_min: float | None
+    cos_max: float | None
+    cus_min: float | None
+    cus_max: float | None
+    css_max: float | None
+    dl_min: float | None
+    dl_max: float | None
+    overlap_m2: float
+    written_document: DocumentReference | None
+    schema_directeur_filename: str | None
+    schema_directeur_graphic_filename: str | None
+
+
 class PagZoningInfo(BaseModel):
     pag_zones: list[PagZoneMatch]
     pap_qe_zones: list[PapQeZoneMatch]
+    pap_nq_zones: list[PapNqZoneMatch]

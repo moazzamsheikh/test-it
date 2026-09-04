@@ -96,9 +96,26 @@ export interface PapQeZoneMatch {
   graphic_document_filename: string | null;
 }
 
+export interface PapNqZoneMatch {
+  denomination: string | null;
+  genre: string | null;
+  cos_min: number | null;
+  cos_max: number | null;
+  cus_min: number | null;
+  cus_max: number | null;
+  css_max: number | null;
+  dl_min: number | null;
+  dl_max: number | null;
+  overlap_m2: number;
+  written_document: DocumentReference | null;
+  schema_directeur_filename: string | null;
+  schema_directeur_graphic_filename: string | null;
+}
+
 export interface PagZoningInfo {
   pag_zones: PagZoneMatch[];
   pap_qe_zones: PapQeZoneMatch[];
+  pap_nq_zones: PapNqZoneMatch[];
 }
 
 export interface ProcedureSectionInfo {

@@ -18,9 +18,15 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.cadastre import Parcel
-from app.models.pag import PagZone, PapQeZone
+from app.models.pag import PagZone, PapNqZone, PapQeZone
 from app.models.provenance import Chunk, Document
-from app.schemas.pag import DocumentReference, PagZoneMatch, PagZoningInfo, PapQeZoneMatch
+from app.schemas.pag import (
+    DocumentReference,
+    PagZoneMatch,
+    PagZoningInfo,
+    PapNqZoneMatch,
+    PapQeZoneMatch,
+)
 
 
 async def _document_reference(
@@ -93,4 +99,45 @@ async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoni
         for row in qe_rows
     ]
 
-    return PagZoningInfo(pag_zones=pag_zones, pap_qe_zones=pap_qe_zones)
+    nq_rows = (
+        await session.execute(
+            select(
+                PapNqZone.denomination,
+                PapNqZone.genre,
+                PapNqZone.cos_min,
+                PapNqZone.cos_max,
+                PapNqZone.cus_min,
+                PapNqZone.cus_max,
+                PapNqZone.css_max,
+                PapNqZone.dl_min,
+                PapNqZone.dl_max,
+                PapNqZone.written_document_id,
+                PapNqZone.schema_directeur_filename,
+                PapNqZone.schema_directeur_graphic_filename,
+                func.ST_Area(func.ST_Intersection(PapNqZone.geom, parcel_geom)).label("overlap_m2"),
+            )
+            .where(func.ST_Intersects(PapNqZone.geom, parcel_geom))
+            .order_by(func.ST_Area(func.ST_Intersection(PapNqZone.geom, parcel_geom)).desc())
+        )
+    ).all()
+
+    pap_nq_zones = [
+        PapNqZoneMatch(
+            denomination=row.denomination,
+            genre=row.genre,
+            cos_min=row.cos_min,
+            cos_max=row.cos_max,
+            cus_min=row.cus_min,
+            cus_max=row.cus_max,
+            css_max=row.css_max,
+            dl_min=row.dl_min,
+            dl_max=row.dl_max,
+            overlap_m2=float(row.overlap_m2),
+            written_document=await _document_reference(session, row.written_document_id),
+            schema_directeur_filename=row.schema_directeur_filename,
+            schema_directeur_graphic_filename=row.schema_directeur_graphic_filename,
+        )
+        for row in nq_rows
+    ]
+
+    return PagZoningInfo(pag_zones=pag_zones, pap_qe_zones=pap_qe_zones, pap_nq_zones=pap_nq_zones)

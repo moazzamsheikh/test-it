@@ -4,6 +4,7 @@ real parcels, real assertions, real (sometimes surprising) results."""
 
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,3 +48,25 @@ async def test_parcel_with_no_pag_coverage_returns_an_empty_list(
 
     assert zoning.pag_zones == []
     assert zoning.pap_qe_zones == []
+
+
+async def test_real_parcel_resolves_real_nq_pap_coefficients(
+    async_db_session: AsyncSession,
+) -> None:
+    """101A00986003628 genuinely intersects several real NQ_PAP ("Nouveau
+    Quartier") zones — verified live against ACT's own GML data, which
+    carries COS/CUS/CSS/DL as real GIS attributes (not something requiring
+    document-table parsing, see DECISIONS.md)."""
+    parcel_id = await _parcel_id(async_db_session, "101A00986003628")
+    zoning = await get_pag_zoning(async_db_session, parcel_id)
+
+    assert len(zoning.pap_nq_zones) >= 1
+    match = next(
+        z for z in zoning.pap_nq_zones if z.denomination == "Weimershof WH-07 - Kennedy Sud"
+    )
+    assert match.cos_max == pytest.approx(0.6)
+    assert match.cus_max == pytest.approx(1.25)
+    assert match.css_max == pytest.approx(0.8)
+    assert match.dl_max == pytest.approx(115.0)
+    assert match.written_document is not None
+    assert "plan d’aménagement" in match.written_document.text.lower()
