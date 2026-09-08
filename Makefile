@@ -49,5 +49,8 @@ ingest-procedures:  ## Ingest the M5 building-permit procedure guide (separate f
 ingest-pag-zones:  ## Ingest M2 real PAG/PAP zoning for the target communes (requires make ingest first)
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_pag_zones
 
+ingest-overlay-documents:  ## Ingest Tier-1 real sectoral-plan RGDs for the M1.4 overlay layers
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_overlay_documents
+
 run:  ## Run the API dev server (requires `make ingest` for real data)
 	cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000

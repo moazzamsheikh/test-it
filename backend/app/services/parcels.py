@@ -18,6 +18,7 @@ from app.models.cadastre import (
     ParcelBuilding,
     ParcelNature,
 )
+from app.models.provenance import Document
 from app.overlay_layers import OVERLAY_LAYERS_BY_CODE
 from app.schemas.parcel import (
     AddressSummary,
@@ -26,6 +27,7 @@ from app.schemas.parcel import (
     ParcelDetail,
     ParcelSummary,
 )
+from app.services.documents import get_document_reference
 from app.services.geometry_analysis import compute_frontage_m, compute_neighbours
 from app.services.overlays import get_or_compute_overlays
 from app.services.pag_zoning import derive_m14_style_constraints, get_pag_zoning
@@ -136,18 +138,40 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
     frontage_m = await compute_frontage_m(session, row.id)
     neighbours = await compute_neighbours(session, row.id)
     pag_zoning = await get_pag_zoning(session, row.id)
-    constraints = [
-        OverlayConstraint(
-            layer_code=result.layer_code,
-            label=OVERLAY_LAYERS_BY_CODE[result.layer_code].label,
-            category=OVERLAY_LAYERS_BY_CODE[result.layer_code].category,
-            intersects=result.intersects,
-            overlap_m2=result.overlap_m2,
-            detail=result.detail,
-            source_url=result.source_url,
+
+    # Tier-1 overlay layers (see app/overlay_layers.py's `document_url`) are
+    # governed by exactly one ingested règlement grand-ducal — resolved here
+    # by source_url, one batched lookup rather than N per-layer queries.
+    document_urls = {
+        url for layer in OVERLAY_LAYERS_BY_CODE.values() if (url := layer.document_url) is not None
+    }
+    document_ids_by_url: dict[str, Any] = {}
+    if document_urls:
+        doc_rows = (
+            await session.execute(
+                select(Document.source_url, Document.id).where(
+                    Document.source_url.in_(document_urls)
+                )
+            )
+        ).all()
+        document_ids_by_url = {r.source_url: r.id for r in doc_rows}
+
+    constraints = []
+    for result in overlay_results:
+        layer = OVERLAY_LAYERS_BY_CODE[result.layer_code]
+        document_id = document_ids_by_url.get(layer.document_url or "")
+        constraints.append(
+            OverlayConstraint(
+                layer_code=result.layer_code,
+                label=layer.label,
+                category=layer.category,
+                intersects=result.intersects,
+                overlap_m2=result.overlap_m2,
+                detail=result.detail,
+                source_url=result.source_url,
+                document=await get_document_reference(session, document_id),
+            )
         )
-        for result in overlay_results
-    ]
     # "zone verte" and "PAP NQ/QE perimeters" are named in the M1.4 overlay
     # list but aren't separate WMS layers (see DECISIONS.md) — derived here
     # from the real M2 PAG data already fetched above, at no extra query cost.

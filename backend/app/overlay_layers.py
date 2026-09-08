@@ -35,6 +35,11 @@ class OverlayLayer:
     wms_layer_id: int
     queryable: bool  # whether GetFeatureInfo works (verified per-layer, not assumed)
     source_url: str  # official page a user can read for context, not just the raw WMS
+    # Real Legilux URL for the ONE règlement grand-ducal that governs this
+    # entire layer (verified per-entry — only set where a single document
+    # applies to the whole layer, not per-feature; see
+    # ingestion/ingest_overlay_documents.py and DECISIONS.md).
+    document_url: str | None = None
 
 
 _GEOPORTAIL_MAP = "https://map.geoportail.lu/theme/main"
@@ -44,10 +49,28 @@ OVERLAY_LAYERS: list[OverlayLayer] = [
     OverlayLayer("pap_approuves", "PAP (approuvés)", "urbanisme", 696, False, _GEOPORTAIL_MAP),
     OverlayLayer("pos", "POS perimeters", "urbanisme", 710, True, _GEOPORTAIL_MAP),
     OverlayLayer(
-        "psl", "Plan directeur sectoriel logement (PSL)", "sectoriel", 401, True, _GEOPORTAIL_MAP
+        "psl",
+        "Plan directeur sectoriel logement (PSL)",
+        "sectoriel",
+        401,
+        True,
+        _GEOPORTAIL_MAP,
+        document_url=(
+            "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2021/02/10/a139/jo/fr/"
+            "html/eli-etat-leg-rgd-2021-02-10-a139-jo-fr-html.html"
+        ),
     ),
     OverlayLayer(
-        "pst", "Plan directeur sectoriel transports (PST)", "sectoriel", 410, True, _GEOPORTAIL_MAP
+        "pst",
+        "Plan directeur sectoriel transports (PST)",
+        "sectoriel",
+        410,
+        True,
+        _GEOPORTAIL_MAP,
+        document_url=(
+            "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2021/02/10/a141/jo/fr/"
+            "html/eli-etat-leg-rgd-2021-02-10-a141-jo-fr-html.html"
+        ),
     ),
     OverlayLayer(
         "pszae",
@@ -56,9 +79,22 @@ OVERLAY_LAYERS: list[OverlayLayer] = [
         407,
         True,
         _GEOPORTAIL_MAP,
+        document_url=(
+            "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2021/02/10/a142/jo/fr/"
+            "html/eli-etat-leg-rgd-2021-02-10-a142-jo-fr-html.html"
+        ),
     ),
     OverlayLayer(
-        "psp", "Plan directeur sectoriel paysages (PSP)", "sectoriel", 396, True, _GEOPORTAIL_MAP
+        "psp",
+        "Plan directeur sectoriel paysages (PSP)",
+        "sectoriel",
+        396,
+        True,
+        _GEOPORTAIL_MAP,
+        document_url=(
+            "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2021/02/10/a140/jo/fr/"
+            "html/eli-etat-leg-rgd-2021-02-10-a140-jo-fr-html.html"
+        ),
     ),
     OverlayLayer(
         "natura2000_habitats", "Natura 2000 — habitats", "environnement", 540, True, _GEOPORTAIL_MAP

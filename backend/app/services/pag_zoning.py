@@ -19,15 +19,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.cadastre import Parcel
 from app.models.pag import PagZone, PapNqZone, PapQeZone
-from app.models.provenance import Chunk, Document
-from app.schemas.pag import (
-    DocumentReference,
-    PagZoneMatch,
-    PagZoningInfo,
-    PapNqZoneMatch,
-    PapQeZoneMatch,
-)
+from app.schemas.pag import PagZoneMatch, PagZoningInfo, PapNqZoneMatch, PapQeZoneMatch
 from app.schemas.parcel import OverlayConstraint
+from app.services.documents import get_document_reference
 
 # ACT's own PAG legend groups these four ZONAGE categories under the
 # heading "Zone verte" (agricole/forestière/parc public/verdure) — verified
@@ -43,29 +37,6 @@ _PAG_DATASET_PAGE_URLS = {
     "0304": "https://data.public.lu/en/datasets/pag-ville-de-luxembourg/",
     "0807": "https://data.public.lu/fr/datasets/pag-wiltz/",
 }
-
-
-async def _document_reference(
-    session: AsyncSession, document_id: uuid.UUID | None
-) -> DocumentReference | None:
-    if document_id is None:
-        return None
-    document = (
-        await session.execute(select(Document).where(Document.id == document_id))
-    ).scalar_one_or_none()
-    if document is None:
-        return None
-    chunk = (
-        await session.execute(
-            select(Chunk).where(Chunk.document_id == document_id).order_by(Chunk.ordinal).limit(1)
-        )
-    ).scalar_one_or_none()
-    return DocumentReference(
-        title=document.title or "",
-        source_url=document.source_url,
-        article_ref=chunk.article_ref if chunk else None,
-        text=chunk.text if chunk else None,
-    )
 
 
 async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoningInfo:
@@ -89,7 +60,7 @@ async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoni
             category=row.category,
             genre=row.genre,
             overlap_m2=float(row.overlap_m2),
-            document=await _document_reference(session, row.written_document_id),
+            document=await get_document_reference(session, row.written_document_id),
         )
         for row in pag_rows
     ]
@@ -109,7 +80,7 @@ async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoni
     pap_qe_zones = [
         PapQeZoneMatch(
             overlap_m2=float(row.overlap_m2),
-            written_document=await _document_reference(session, row.written_document_id),
+            written_document=await get_document_reference(session, row.written_document_id),
             graphic_document_filename=row.graphic_document_filename,
         )
         for row in qe_rows
@@ -149,7 +120,7 @@ async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoni
             dl_min=row.dl_min,
             dl_max=row.dl_max,
             overlap_m2=float(row.overlap_m2),
-            written_document=await _document_reference(session, row.written_document_id),
+            written_document=await get_document_reference(session, row.written_document_id),
             schema_directeur_filename=row.schema_directeur_filename,
             schema_directeur_graphic_filename=row.schema_directeur_graphic_filename,
         )

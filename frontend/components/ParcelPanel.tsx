@@ -308,14 +308,35 @@ function ConstraintsSection({ constraints }: { constraints: ParcelDetail["constr
               {c.overlap_m2 !== null && (
                 <div className="text-xs text-amber-800">{c.overlap_m2.toFixed(1)} m² overlap</div>
               )}
-              <a
-                href={c.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-blue-700 underline"
-              >
-                Source
-              </a>
+              {c.document ? (
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-xs text-amber-800">
+                    {c.document.article_ref ?? c.document.title}
+                  </summary>
+                  {c.document.text && (
+                    <p className="mt-1 text-xs whitespace-pre-line text-zinc-700">
+                      {c.document.text}
+                    </p>
+                  )}
+                  <a
+                    href={c.document.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-700 underline"
+                  >
+                    Full text
+                  </a>
+                </details>
+              ) : (
+                <a
+                  href={c.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-700 underline"
+                >
+                  Source
+                </a>
+              )}
             </li>
           ))}
         </ul>

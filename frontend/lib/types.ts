@@ -49,6 +49,7 @@ export interface OverlayConstraint {
   overlap_m2: number | null;
   detail: Record<string, unknown> | null;
   source_url: string;
+  document: DocumentReference | null;
 }
 
 export interface OverlayLayerInfo {

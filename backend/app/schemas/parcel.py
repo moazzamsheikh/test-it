@@ -6,7 +6,7 @@ import uuid
 
 from pydantic import BaseModel
 
-from app.schemas.pag import PagZoningInfo
+from app.schemas.pag import DocumentReference, PagZoningInfo
 
 
 class AddressSummary(BaseModel):
@@ -37,6 +37,10 @@ class OverlayConstraint(BaseModel):
     overlap_m2: float | None
     detail: dict[str, object] | None
     source_url: str
+    # Real ingested règlement grand-ducal text this layer is governed by
+    # (only set for layers with a single applicable document — see
+    # app/overlay_layers.py's `document_url` and DECISIONS.md).
+    document: DocumentReference | None = None
 
 
 class NeighbourDistance(BaseModel):
