@@ -40,9 +40,45 @@ class OverlayLayer:
     # applies to the whole layer, not per-feature; see
     # ingestion/ingest_overlay_documents.py and DECISIONS.md).
     document_url: str | None = None
+    # For layers governed per-watercourse/per-commune rather than by one
+    # national document (flood zones: a separate RGD per river basin, not
+    # the single "PGRI" planning document originally assumed — see
+    # DECISIONS.md), a static admin_commune_code -> Legilux URL mapping,
+    # verified against the real government legislation page for each of
+    # our two target communes specifically. Does not scale to Luxembourg's
+    # other ~100 communes without more entries — a known, already-tracked
+    # gap (see PROGRESS.md's 102-commune scaling analysis), not a hidden one.
+    document_url_by_commune: dict[str, str] | None = None
+    # For layers whose own GetFeatureInfo attributes carry a direct
+    # per-feature Legilux link (ZPIN's real `lien_legilux` field — verified
+    # live, not assumed; Natura 2000 checked the same way and does NOT have
+    # one, so it still needs a static lookup instead), the `detail` dict key
+    # holding that link. Resolved dynamically at request time, not listed
+    # here statically — see app/services/legilux_dynamic.py.
+    document_url_detail_key: str | None = None
 
 
 _GEOPORTAIL_MAP = "https://map.geoportail.lu/theme/main"
+
+# Verified against eau.gouvernement.lu's own legislation page (the real
+# per-watercourse RGD list, not a plausible-looking guess): each real RGD
+# is dated 30 March 2022 and names its own river basin explicitly. "0304"
+# (Luxembourg City, on the Alzette) -> a188 "Alzette et Wark"; "0807"
+# (Wiltz, on the Wiltz river) -> a187 "Sûre supérieure, de la Wiltz, de la
+# Clerve et de l'Our" — confirmed by fetching and reading the real extracted
+# title, not by trusting a summarised numbering (an earlier AI-summarised
+# fetch of the same source page misattributed a185 to Wiltz; a185 is
+# actually "Mamer et Eisch" — see DECISIONS.md).
+_FLOOD_DOCUMENT_URLS = {
+    "0304": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2022/03/30/a188/jo/fr/"
+        "html/eli-etat-leg-rgd-2022-03-30-a188-jo-fr-html.html"
+    ),
+    "0807": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2022/03/30/a187/jo/fr/"
+        "html/eli-etat-leg-rgd-2022-03-30-a187-jo-fr-html.html"
+    ),
+}
 
 OVERLAY_LAYERS: list[OverlayLayer] = [
     OverlayLayer("pag_zoning", "PAG zoning", "urbanisme", 698, True, _GEOPORTAIL_MAP),
@@ -109,12 +145,25 @@ OVERLAY_LAYERS: list[OverlayLayer] = [
         804,
         True,
         _GEOPORTAIL_MAP,
+        document_url_detail_key="lien_legilux",
     ),
     OverlayLayer(
-        "flood_hq20", "Flood zone — HQ20 (20-year)", "risques", 3037, True, _GEOPORTAIL_MAP
+        "flood_hq20",
+        "Flood zone — HQ20 (20-year)",
+        "risques",
+        3037,
+        True,
+        _GEOPORTAIL_MAP,
+        document_url_by_commune=_FLOOD_DOCUMENT_URLS,
     ),
     OverlayLayer(
-        "flood_hq100", "Flood zone — HQ100 (100-year)", "risques", 3262, True, _GEOPORTAIL_MAP
+        "flood_hq100",
+        "Flood zone — HQ100 (100-year)",
+        "risques",
+        3262,
+        True,
+        _GEOPORTAIL_MAP,
+        document_url_by_commune=_FLOOD_DOCUMENT_URLS,
     ),
     OverlayLayer(
         "water_protection",
@@ -145,6 +194,14 @@ OVERLAY_LAYERS: list[OverlayLayer] = [
         3212,
         True,
         _GEOPORTAIL_MAP,
+        # Art. 19-28 of this RGD are specifically the height/radio-navigation
+        # servitudes this layer represents — confirmed by reading the real
+        # extracted article text, not assumed from the POS's general title
+        # (see DECISIONS.md).
+        document_url=(
+            "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2006/05/17/n1/jo/fr/"
+            "html/eli-etat-leg-rgd-2006-05-17-n1-jo-fr-html.html"
+        ),
     ),
     OverlayLayer(
         "gas_network", "High-pressure gas network", "reseaux", 1494, True, _GEOPORTAIL_MAP

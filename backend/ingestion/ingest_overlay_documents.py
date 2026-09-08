@@ -1,8 +1,10 @@
 """Ingest the real règlements grand-ducaux that govern the M1.4 overlay
-layers which have a single applicable document (see `OverlayLayer.document_url`
-in app/overlay_layers.py — Tier 1 of the post-M1 overlay-document gap: see
-DECISIONS.md). Config-driven, same reason M1.4's WMS layers are: one entry
-per layer here, not one hardcoded ingestion function per document.
+layers which have a single applicable document (`OverlayLayer.document_url`)
+or a small per-commune set (`OverlayLayer.document_url_by_commune`, for
+layers governed per-watercourse rather than nationally — see DECISIONS.md)
+in app/overlay_layers.py — Tier 1 of the post-M1 overlay-document gap.
+Config-driven, same reason M1.4's WMS layers are: one entry per layer here,
+not one hardcoded ingestion function per document.
 
 Uses the Legilux "richtext" HTML export format (ingestion/legilux_extraction.py),
 verified reusable across every RGD this project has needed so far — one real
@@ -25,7 +27,7 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.models.enums import AccessMethod, DocumentType, Language, LegalStatus, SourceStatus
 from app.models.provenance import Chunk, Document, Source
-from app.overlay_layers import OVERLAY_LAYERS, OverlayLayer
+from app.overlay_layers import OVERLAY_LAYERS
 from ingestion.download_cache import download_cached
 from ingestion.legilux_extraction import extract_legilux_document
 
@@ -34,26 +36,19 @@ logger = structlog.get_logger(__name__)
 PUBLISHER = "Gouvernement du Grand-Duché de Luxembourg (Legilux)"
 
 
-def _cache_filename(layer: OverlayLayer) -> str:
-    return f"legilux_{layer.code}.html"
-
-
-def _ingest_one(session: Session, layer: OverlayLayer) -> Document | None:
-    if layer.document_url is None:
-        return None
-
-    html_path = download_cached(layer.document_url, _cache_filename(layer))
+def _ingest_one(session: Session, document_url: str, label: str, cache_key: str) -> Document | None:
+    html_path = download_cached(document_url, f"legilux_{cache_key}.html")
     html = html_path.read_text(encoding="utf-8")
     sha256 = hashlib.sha256(html.encode("utf-8")).hexdigest()
     title, articles = extract_legilux_document(html)
 
-    source_name = f"Legilux — {layer.label}"
+    source_name = f"Legilux — {label}"
     source_stmt = (
         insert(Source)
         .values(
             name=source_name,
-            description=f"Règlement grand-ducal governing the {layer.label} overlay layer.",
-            source_url=layer.document_url,
+            description=f"Règlement grand-ducal governing the {label} overlay layer.",
+            source_url=document_url,
             access_method=AccessMethod.scrape,
             publisher=PUBLISHER,
             last_fetch_at=func.now(),
@@ -74,20 +69,20 @@ def _ingest_one(session: Session, layer: OverlayLayer) -> Document | None:
 
     existing = session.execute(
         select(Document).where(
-            Document.source_url == layer.document_url,
+            Document.source_url == document_url,
             Document.sha256 == sha256,
         )
     ).scalar_one_or_none()
     if existing is not None:
         logger.info(
-            "ingest.overlay_document.unchanged", layer=layer.code, document_id=str(existing.id)
+            "ingest.overlay_document.unchanged", cache_key=cache_key, document_id=str(existing.id)
         )
         return existing
 
     document = Document(
         source_id=source_id,
-        source_url=layer.document_url,
-        title=title or layer.label,
+        source_url=document_url,
+        title=title or label,
         publisher=PUBLISHER,
         sha256=sha256,
         language=Language.fr,
@@ -118,7 +113,7 @@ def _ingest_one(session: Session, layer: OverlayLayer) -> Document | None:
 
     logger.info(
         "ingest.overlay_document.new_document",
-        layer=layer.code,
+        cache_key=cache_key,
         document_id=str(document.id),
         articles=len(articles),
     )
@@ -126,9 +121,21 @@ def _ingest_one(session: Session, layer: OverlayLayer) -> Document | None:
 
 
 def ingest(session: Session) -> list[Document]:
-    documents = []
+    # Keyed by document_url so a URL shared by more than one layer (the two
+    # flood layers both point at the same per-commune RGD, since one RGD
+    # declares both the HQ20 and HQ100 maps mandatory together) is fetched
+    # and ingested exactly once, not once per layer that references it.
+    to_ingest: dict[str, tuple[str, str]] = {}
     for layer in OVERLAY_LAYERS:
-        document = _ingest_one(session, layer)
+        if layer.document_url is not None:
+            to_ingest.setdefault(layer.document_url, (layer.label, layer.code))
+        if layer.document_url_by_commune is not None:
+            for commune_code, document_url in layer.document_url_by_commune.items():
+                to_ingest.setdefault(document_url, (layer.label, f"{layer.code}_{commune_code}"))
+
+    documents = []
+    for document_url, (label, cache_key) in to_ingest.items():
+        document = _ingest_one(session, document_url, label, cache_key)
         if document is not None:
             documents.append(document)
     return documents

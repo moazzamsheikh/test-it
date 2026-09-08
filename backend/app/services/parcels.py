@@ -29,6 +29,7 @@ from app.schemas.parcel import (
 )
 from app.services.documents import get_document_reference
 from app.services.geometry_analysis import compute_frontage_m, compute_neighbours
+from app.services.legilux_dynamic import ensure_document_from_eli_link
 from app.services.overlays import get_or_compute_overlays
 from app.services.pag_zoning import derive_m14_style_constraints, get_pag_zoning
 
@@ -139,12 +140,18 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
     neighbours = await compute_neighbours(session, row.id)
     pag_zoning = await get_pag_zoning(session, row.id)
 
-    # Tier-1 overlay layers (see app/overlay_layers.py's `document_url`) are
-    # governed by exactly one ingested règlement grand-ducal — resolved here
-    # by source_url, one batched lookup rather than N per-layer queries.
-    document_urls = {
-        url for layer in OVERLAY_LAYERS_BY_CODE.values() if (url := layer.document_url) is not None
-    }
+    # Tier-1 overlay layers (see app/overlay_layers.py's `document_url` /
+    # `document_url_by_commune`) are governed by one ingested règlement
+    # grand-ducal — either a single one nationally, or one per commune for
+    # layers governed per-watercourse (flood zones — see DECISIONS.md).
+    # Resolved here by source_url, one batched lookup rather than N
+    # per-layer queries.
+    document_urls: set[str] = set()
+    for layer in OVERLAY_LAYERS_BY_CODE.values():
+        if layer.document_url is not None:
+            document_urls.add(layer.document_url)
+        if layer.document_url_by_commune is not None:
+            document_urls.update(layer.document_url_by_commune.values())
     document_ids_by_url: dict[str, Any] = {}
     if document_urls:
         doc_rows = (
@@ -159,7 +166,25 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
     constraints = []
     for result in overlay_results:
         layer = OVERLAY_LAYERS_BY_CODE[result.layer_code]
-        document_id = document_ids_by_url.get(layer.document_url or "")
+        # Dynamic per-feature linking (ZPIN's real `lien_legilux` attribute)
+        # takes priority over the static document_url(_by_commune) config —
+        # a layer only ever uses one resolution mechanism, never both (see
+        # DECISIONS.md on why Natura 2000 still needs the static approach
+        # while ZPIN doesn't).
+        eli_url = (
+            (result.detail or {}).get(layer.document_url_detail_key)
+            if layer.document_url_detail_key is not None
+            else None
+        )
+        if isinstance(eli_url, str):
+            document_id = await ensure_document_from_eli_link(session, result, eli_url, layer.label)
+        else:
+            effective_document_url = layer.document_url
+            if layer.document_url_by_commune is not None:
+                effective_document_url = layer.document_url_by_commune.get(
+                    row.admin_commune_code or ""
+                )
+            document_id = document_ids_by_url.get(effective_document_url or "")
         constraints.append(
             OverlayConstraint(
                 layer_code=result.layer_code,

@@ -53,3 +53,18 @@ def extract_legilux_document(html: str) -> tuple[str, list[LegiluxArticle]]:
         raise ValueError("no div.richtext_article elements found — unexpected page structure")
 
     return title, articles
+
+
+def eli_url_to_richtext_html_url(eli_url: str) -> str:
+    """Transforms a `legilux.public.lu/eli/.../jo` link (the form Legilux's own
+    GIS data uses, e.g. ZPIN's real `lien_legilux` attribute — see
+    app/services/legilux_dynamic.py) into its real `data.legilux.public.lu`
+    richtext HTML export URL. Confirmed mechanical, not a guess: verified
+    against 8 real documents this project has ingested so far (4 sectoral
+    plans, Findel, 2 flood RGDs, ZPIN's Gréngewald reserve) — every one
+    follows `.../filestore/eli/<path>/fr/html/eli-<path-with-dashes>-fr-html.html`
+    with no exceptions, where <path> is everything after "eli/" in the
+    original link (e.g. "etat/leg/rgd/2024/01/24/a15/jo")."""
+    path = eli_url.split("/eli/", 1)[1].strip("/")
+    dashed = path.replace("/", "-")
+    return f"https://data.legilux.public.lu/filestore/eli/{path}/fr/html/eli-{dashed}-fr-html.html"

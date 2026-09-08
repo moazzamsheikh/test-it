@@ -33,4 +33,12 @@ class ParcelOverlayResult(Base):
     # whatever attributes that specific layer happens to carry.
     detail: Mapped[dict[str, object] | None] = mapped_column(JSONB, default=None)
     source_url: Mapped[str] = mapped_column(Text)
+    # Lazily resolved from a per-feature Legilux link inside `detail` (e.g.
+    # ZPIN's real `lien_legilux` attribute — see app/overlay_layers.py's
+    # `document_url_detail_key` and app/services/legilux_dynamic.py) the
+    # first time a real parcel hits that specific feature; cached here so
+    # later parcels hitting the same feature never re-fetch it.
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("documents.id", ondelete="SET NULL"), default=None
+    )
     computed_at: Mapped[datetime] = mapped_column(server_default=func.now())
