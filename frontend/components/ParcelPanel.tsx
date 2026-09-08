@@ -346,9 +346,25 @@ function ConstraintsSection({ constraints }: { constraints: ParcelDetail["constr
           <summary className="cursor-pointer text-xs text-zinc-500">
             {doesNotApply.length} checked and not applicable
           </summary>
-          <ul className="mt-1 space-y-0.5 text-xs text-zinc-500">
+          <ul className="mt-1 space-y-1 text-xs text-zinc-500">
             {doesNotApply.map((c) => (
-              <li key={c.layer_code}>{c.label}</li>
+              <li key={c.layer_code}>
+                {c.label}
+                {c.document && (
+                  <>
+                    {" — governed nationally by "}
+                    <a
+                      href={c.document.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-700 underline"
+                    >
+                      {c.document.title}
+                    </a>
+                    {" (doesn't apply at this specific location)"}
+                  </>
+                )}
+              </li>
             ))}
           </ul>
         </details>
