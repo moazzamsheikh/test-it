@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import AddressSearch from "@/components/AddressSearch";
 import ParcelPanel from "@/components/ParcelPanel";
+import ReferenceSearch from "@/components/ReferenceSearch";
 import { getParcelDetail, identifyParcel } from "@/lib/api";
 import type { AddressSearchResult, ParcelDetail, ParcelSummary } from "@/lib/types";
 
@@ -70,6 +71,19 @@ export default function Home() {
     setSelectedParcelId(cadastralId);
   }
 
+  function handleReferenceResult(parcels: ParcelSummary[]) {
+    if (parcels.length === 1) {
+      setCandidates([]);
+      setSelectedParcelId(parcels[0].cadastral_id);
+    } else if (parcels.length > 1) {
+      setCandidates(parcels);
+      setSelectedParcelId(null);
+    } else {
+      setCandidates([]);
+      setSelectedParcelId(null);
+    }
+  }
+
   return (
     <div className="flex h-screen flex-col">
       <header className="flex items-center gap-4 border-b border-zinc-200 px-4 py-3">
@@ -77,6 +91,7 @@ export default function Home() {
           Luxembourg Parcel Intelligence
         </h1>
         <AddressSearch onSelect={handleSelectAddress} />
+        <ReferenceSearch onResult={handleReferenceResult} />
       </header>
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1">
