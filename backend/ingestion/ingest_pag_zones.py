@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.logging import configure_logging
-from app.models.cadastre import Parcel
+from app.models.cadastre import Commune, Parcel
 from app.models.enums import AccessMethod, DocumentType, Language, LegalStatus, SourceStatus
 from app.models.pag import PagZone, PapNqZone, PapQeZone
 from app.models.provenance import Chunk, Document, Source
@@ -423,7 +423,14 @@ def main() -> None:
     configure_logging()
     engine = create_engine(settings.database_url)
     with Session(engine) as session:
-        commune_names = {"0304": "Luxembourg", "0807": "Wiltz"}
+        # Resolved from the real `communes` table rather than a second
+        # hardcoded parallel list — that list previously only covered the
+        # original 2 target communes and raised a real KeyError the moment
+        # PAG_ZIP_URLS grew to 8 (see DECISIONS.md).
+        commune_rows = session.execute(
+            select(Commune.lau2_code, Commune.name).where(Commune.lau2_code.in_(PAG_ZIP_URLS))
+        ).all()
+        commune_names: dict[str, str] = {row.lau2_code: row.name for row in commune_rows}
         for admin_commune_code, zip_url in PAG_ZIP_URLS.items():
             result = ingest_commune(
                 session, admin_commune_code, commune_names[admin_commune_code], zip_url

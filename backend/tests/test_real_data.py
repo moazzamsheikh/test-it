@@ -1,8 +1,9 @@
-"""End-to-end tests against real ingested data (Wiltz + Luxembourg City).
+"""End-to-end tests against real ingested data (the 8 brief-named
+deep-ingestion communes).
 
 Read-only by design — these assert facts about the actual PCN/BD-Adresses
 corpus loaded by `make ingest`, not fixtures. Requires `make ingest` to have
-been run first (parcels, buildings, addresses for the two target communes).
+been run first (parcels, buildings, addresses for the target communes).
 
 The specific cadastral_ids/building_ids below were found by querying the real
 ingested data (see DECISIONS.md / WALKTHROUGH.md), not invented — if a fresh
@@ -25,10 +26,12 @@ WILTZ_ZERO_ADDRESS_PARCEL = "127B00746005379"
 LUX_MANY_ADDRESS_PARCEL = "075A00297001263"
 MIN_EXPECTED_ADDRESS_COUNT = 15
 
-# A real building genuinely spanning multiple parcels (verified: meaningful
-# overlap in m² with each, not boundary-touch noise) — the M1.3 "building
-# spanning two parcels" edge case.
-MULTI_PARCEL_BUILDING_ID = "b341de75-0167-4b12-9252-93f15e2c61f1"
+# Buildings get a fresh random UUID every `make ingest-parcels` run (see
+# ingestion/ingest_parcels_buildings.py), unlike cadastral_id above (a real,
+# stable natural key from the source data) — a hardcoded building_id here
+# went stale the moment the pipeline was re-run for more communes (caught
+# live, not anticipated). The M1.3 "building spanning two parcels" edge
+# case is instead found fresh each run, by its real defining property.
 
 
 def test_wiltz_zero_address_parcel_exists(db_session: Session) -> None:
@@ -53,9 +56,17 @@ def test_luxembourg_parcel_with_many_addresses(db_session: Session) -> None:
 
 
 def test_building_spans_multiple_parcels_with_real_overlap(db_session: Session) -> None:
+    multi_parcel_building_id = db_session.execute(
+        select(ParcelBuilding.building_id)
+        .group_by(ParcelBuilding.building_id)
+        .having(func.count() >= 2)
+        .limit(1)
+    ).scalar_one_or_none()
+    assert multi_parcel_building_id is not None, "no real multi-parcel building found"
+
     links = (
         db_session.execute(
-            select(ParcelBuilding).where(ParcelBuilding.building_id == MULTI_PARCEL_BUILDING_ID)
+            select(ParcelBuilding).where(ParcelBuilding.building_id == multi_parcel_building_id)
         )
         .scalars()
         .all()
@@ -76,10 +87,20 @@ def test_every_ingested_parcel_has_positive_area(db_session: Session) -> None:
 
 
 def test_every_ingested_parcel_admin_commune_is_a_target_commune(db_session: Session) -> None:
-    """Every parcel's admin_commune_code must resolve to Wiltz or Luxembourg —
-    proves the cadastral_communes -> communes propagation held across the
-    whole ingested set, not just the rows we spot-checked by hand."""
-    target_names = {"Wiltz", "Luxembourg"}
+    """Every parcel's admin_commune_code must resolve to one of the 8
+    brief-named deep-ingestion communes — proves the cadastral_communes ->
+    communes propagation held across the whole ingested set, not just the
+    rows we spot-checked by hand."""
+    target_names = {
+        "Wiltz",
+        "Luxembourg",
+        "Esch-sur-Alzette",
+        "Differdange",
+        "Dudelange",
+        "Schengen",
+        "Junglinster",
+        "Sanem",
+    }
     rows = db_session.execute(
         select(Parcel.admin_commune_code, Commune.name)
         .join(Commune, Commune.lau2_code == Parcel.admin_commune_code)

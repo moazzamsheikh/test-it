@@ -95,6 +95,37 @@ def ingest_parcels(session: Session, shp_path: Path, code_to_admin: dict[str, st
             }
         )
 
+    # The real source shapefile isn't perfectly clean — a genuine duplicate
+    # natural key was found live in Sanem's own PCN export (two distinct
+    # `ID_PARCELL` rows sharing the same commune+section+numero, not a
+    # re-run/idempotency issue: verified against an empty pre-existing set
+    # for that commune — see DECISIONS.md). Deduped here (first occurrence
+    # kept, rest logged) rather than letting one commune's data anomaly
+    # abort the whole ingestion run (M2.1's "a failing source is logged and
+    # skipped, never aborts the run", applied at the row level here).
+    seen: dict[tuple[str, str, int, int], dict[str, Any]] = {}
+    duplicates = 0
+    for row in values:
+        key = (
+            row["cadastral_commune_code"],
+            row["section_code"],
+            row["numero_principal"],
+            row["numero_secondaire"],
+        )
+        if key in seen:
+            duplicates += 1
+            logger.warning(
+                "ingest.parcels.duplicate_natural_key",
+                key=key,
+                kept_cadastral_id=seen[key]["cadastral_id"],
+                dropped_cadastral_id=row["cadastral_id"],
+            )
+            continue
+        seen[key] = row
+    if duplicates:
+        logger.warning("ingest.parcels.duplicates_dropped", count=duplicates)
+    values = list(seen.values())
+
     for batch in _batched(values):
         stmt = insert(Parcel).values(batch)
         stmt = stmt.on_conflict_do_update(
