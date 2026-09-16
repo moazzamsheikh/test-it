@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 from pydantic import BaseModel
 
 
@@ -9,10 +11,16 @@ class DocumentReference(BaseModel):
     title: str
     source_url: str
     article_ref: str | None
-    # The real, verbatim regulation text — null only if the referenced
-    # document couldn't be resolved (an honest gap, not expected in practice
-    # once ingestion has run for a commune).
+    # The real, verbatim regulation text — null for a graphic/map document
+    # (nothing meaningful to extract) or if the referenced document
+    # couldn't be resolved (an honest gap, not expected in practice once
+    # ingestion has run for a commune).
     text: str | None
+    # Set only when we actually stored the real file locally (graphic PDFs
+    # — see ingestion/ingest_pag_zones.py) — lets a client build a real
+    # `GET /api/v1/documents/{document_id}/file` download link rather than
+    # just knowing a document exists.
+    document_id: uuid.UUID | None = None
 
 
 class PagZoneMatch(BaseModel):
@@ -28,12 +36,14 @@ class PagZoneMatch(BaseModel):
 
 class PapQeZoneMatch(BaseModel):
     """One real ZONES_QE polygon (PAP "Quartier Existant" sub-zone)
-    intersecting the parcel. `graphic_document_filename` is a real filename
-    reference only — its content isn't ingested yet (see DECISIONS.md)."""
+    intersecting the parcel. `graphic_document` is the real stored map PDF
+    (see DECISIONS.md) when it was found in the source ZIP;
+    `graphic_document_filename` is the raw filename either way."""
 
     overlap_m2: float
     written_document: DocumentReference | None
     graphic_document_filename: str | None
+    graphic_document: DocumentReference | None
 
 
 class PapNqZoneMatch(BaseModel):
@@ -41,8 +51,9 @@ class PapNqZoneMatch(BaseModel):
     intersecting the parcel. COS/CUS/CSS/DL are real GIS attributes, not
     parsed from document text — verified live for both target communes
     (see DECISIONS.md). `css_min` doesn't exist in the real data (only a
-    max), so there's no field for it. Schéma-directeur filenames are real
-    references only — their PDF content isn't ingested yet."""
+    max), so there's no field for it. The schéma-directeur's written PDF
+    remains a filename reference only; its graphic (map) part is fetched
+    and stored like PAP QE's — see `schema_directeur_graphic_document`."""
 
     denomination: str | None
     genre: str | None
@@ -57,6 +68,7 @@ class PapNqZoneMatch(BaseModel):
     written_document: DocumentReference | None
     schema_directeur_filename: str | None
     schema_directeur_graphic_filename: str | None
+    schema_directeur_graphic_document: DocumentReference | None
 
 
 class PagZoningInfo(BaseModel):

@@ -70,6 +70,7 @@ async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoni
             select(
                 PapQeZone.written_document_id,
                 PapQeZone.graphic_document_filename,
+                PapQeZone.graphic_document_id,
                 func.ST_Area(func.ST_Intersection(PapQeZone.geom, parcel_geom)).label("overlap_m2"),
             )
             .where(func.ST_Intersects(PapQeZone.geom, parcel_geom))
@@ -82,6 +83,7 @@ async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoni
             overlap_m2=float(row.overlap_m2),
             written_document=await get_document_reference(session, row.written_document_id),
             graphic_document_filename=row.graphic_document_filename,
+            graphic_document=await get_document_reference(session, row.graphic_document_id),
         )
         for row in qe_rows
     ]
@@ -101,6 +103,7 @@ async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoni
                 PapNqZone.written_document_id,
                 PapNqZone.schema_directeur_filename,
                 PapNqZone.schema_directeur_graphic_filename,
+                PapNqZone.schema_directeur_graphic_document_id,
                 func.ST_Area(func.ST_Intersection(PapNqZone.geom, parcel_geom)).label("overlap_m2"),
             )
             .where(func.ST_Intersects(PapNqZone.geom, parcel_geom))
@@ -123,6 +126,9 @@ async def get_pag_zoning(session: AsyncSession, parcel_id: uuid.UUID) -> PagZoni
             written_document=await get_document_reference(session, row.written_document_id),
             schema_directeur_filename=row.schema_directeur_filename,
             schema_directeur_graphic_filename=row.schema_directeur_graphic_filename,
+            schema_directeur_graphic_document=await get_document_reference(
+                session, row.schema_directeur_graphic_document_id
+            ),
         )
         for row in nq_rows
     ]

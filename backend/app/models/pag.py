@@ -63,12 +63,14 @@ class PapQeZone(Base):
     written_document_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("documents.id", ondelete="SET NULL"), default=None
     )
-    # The graphic-part PDFs are large (Luxembourg City's 23 files total
-    # ~250MB) and not text-extractable in a useful way yet — deliberately
-    # NOT fetched/ingested as a Document this pass (see DECISIONS.md); just
-    # the real filename the GML itself references, honest about the gap
-    # rather than pretending it's a resolved citation.
+    # The graphic-part PDFs are real maps (no useful text to extract, hence
+    # no Chunk) but are fetched and stored (see `_get_or_create_graphic_document`
+    # in ingestion/ingest_pag_zones.py) so they're actually citable/servable —
+    # not just a filename reference (see DECISIONS.md).
     graphic_document_filename: Mapped[str | None] = mapped_column(Text, default=None)
+    graphic_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("documents.id", ondelete="SET NULL"), default=None
+    )
     geom: Mapped[WKBElement] = mapped_column(Geometry(geometry_type="MULTIPOLYGON", srid=2169))
     source_url: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
@@ -112,13 +114,18 @@ class PapNqZone(Base):
     written_document_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("documents.id", ondelete="SET NULL"), default=None
     )
-    # The schéma directeur (master plan) written/graphic parts are real PDFs
-    # per NQ project — not fetched/parsed this pass (see DECISIONS.md): the
+    # The schéma directeur (master plan) written part is a real PDF per NQ
+    # project — not fetched/parsed this pass (see DECISIONS.md): the
     # coefficients above are the actual numbers a NQ project needs, already
     # real GIS attributes, so PDF text extraction isn't required to answer
     # "what are COS/CUS/CSS/DL here" — only to read the full narrative text.
+    # The graphic part IS fetched and stored (see `schema_directeur_graphic_document_id`)
+    # since a map has no text to extract but is still real, citable content.
     schema_directeur_filename: Mapped[str | None] = mapped_column(Text, default=None)
     schema_directeur_graphic_filename: Mapped[str | None] = mapped_column(Text, default=None)
+    schema_directeur_graphic_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("documents.id", ondelete="SET NULL"), default=None
+    )
     geom: Mapped[WKBElement] = mapped_column(Geometry(geometry_type="MULTIPOLYGON", srid=2169))
     source_url: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

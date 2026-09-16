@@ -29,7 +29,7 @@ from app.models.cadastre import Commune, Parcel
 from app.models.enums import AccessMethod, DocumentType, Language, LegalStatus, SourceStatus
 from app.models.pag import PagZone, PapNqZone, PapQeZone
 from app.models.provenance import Chunk, Document, Source
-from ingestion.config import PAG_ZIP_URLS, USER_AGENT
+from ingestion.config import CACHE_DIR, PAG_ZIP_URLS, USER_AGENT
 from ingestion.gml_geometry import parse_gml_polygon
 from ingestion.pag_document_extraction import extract_pag_docx
 from ingestion.remote_zip import open_remote_zip
@@ -38,6 +38,7 @@ logger = structlog.get_logger(__name__)
 
 _GML_PAG_NS = "{http://www.interlis.ch/INTERLIS2.3/GML32/PAG}"
 _BATCH_SIZE = 2000
+_GRAPHICS_DIR = CACHE_DIR / "pag_graphics"
 
 
 def _batched(values: list[dict[str, Any]], size: int = _BATCH_SIZE) -> list[list[dict[str, Any]]]:
@@ -296,6 +297,52 @@ def _get_or_create_written_document(
     return document.id
 
 
+def _get_or_create_graphic_document(
+    session: Session,
+    *,
+    source_id: uuid.UUID,
+    zip_url: str,
+    admin_commune_code: str,
+    entry_name: str,
+    data: bytes,
+) -> uuid.UUID:
+    """A PAP QE/NQ graphic-part PDF is a real map, not text — there's
+    nothing meaningful to extract into a `Chunk`, but the real point (the
+    brief's own words: "if anybody asks us, we can directly give this
+    paper" — see PAG_PAP_SPEC.md) is that the file itself is real, stored,
+    and servable, not just a filename we know about. Saved to disk (same
+    `data/cache` discipline as everything else fetched by this project) and
+    referenced via `Document.storage_path`, servable via
+    `GET /api/v1/documents/{id}/file`."""
+    source_url = f"{zip_url}#{entry_name}"
+    sha256 = hashlib.sha256(data).hexdigest()
+    existing = session.execute(
+        select(Document).where(Document.source_url == source_url, Document.sha256 == sha256)
+    ).scalar_one_or_none()
+    if existing is not None:
+        return existing.id
+
+    commune_dir = _GRAPHICS_DIR / admin_commune_code
+    commune_dir.mkdir(parents=True, exist_ok=True)
+    dest = commune_dir / entry_name
+    dest.write_bytes(data)
+
+    document = Document(
+        source_id=source_id,
+        source_url=source_url,
+        title=entry_name,
+        publisher="Administration du cadastre et de la topographie (ACT)",
+        sha256=sha256,
+        language=Language.unknown,  # a map, not text
+        legal_status=LegalStatus.unknown,
+        document_type=DocumentType.pag_graphic,
+        storage_path=str(dest),
+    )
+    session.add(document)
+    session.flush()
+    return document.id
+
+
 def ingest_commune(
     session: Session, admin_commune_code: str, commune_name: str, zip_url: str
 ) -> dict[str, int]:
@@ -351,6 +398,32 @@ def ingest_commune(
             commune=commune_name,
             missing=missing_documents,
         )
+
+    graphic_filenames = {f.nom_fichier_gr for f in qe_features if f.nom_fichier_gr}
+    graphic_filenames |= {f.nom_fichier_sd_gr for f in nq_features if f.nom_fichier_sd_gr}
+
+    filename_to_graphic_document_id: dict[str, uuid.UUID] = {}
+    missing_graphics = []
+    for filename in sorted(graphic_filenames):
+        entry_name = f"{filename}.pdf"
+        if entry_name not in zf.namelist():
+            missing_graphics.append(entry_name)
+            continue
+        data = zf.read(entry_name)
+        filename_to_graphic_document_id[filename] = _get_or_create_graphic_document(
+            session,
+            source_id=source_id,
+            zip_url=zip_url,
+            admin_commune_code=admin_commune_code,
+            entry_name=entry_name,
+            data=data,
+        )
+    if missing_graphics:
+        logger.warning(
+            "ingest.pag_zones.missing_graphic_documents",
+            commune=commune_name,
+            missing=missing_graphics,
+        )
     session.commit()  # documents need real ids before pag_zones/pap_qe_zones reference them
 
     session.execute(delete(PagZone).where(PagZone.admin_commune_code == admin_commune_code))
@@ -379,6 +452,7 @@ def ingest_commune(
             "admin_commune_code": admin_commune_code,
             "written_document_id": filename_to_document_id.get(f.nom_fichier_ec or ""),
             "graphic_document_filename": f.nom_fichier_gr,
+            "graphic_document_id": filename_to_graphic_document_id.get(f.nom_fichier_gr or ""),
             "geom": from_shape(f.geom, srid=2169),
             "source_url": zip_url,
         }
@@ -403,6 +477,9 @@ def ingest_commune(
             "written_document_id": filename_to_document_id.get(f.nom_fichier_ec or ""),
             "schema_directeur_filename": f.nom_fichier_sd_ec,
             "schema_directeur_graphic_filename": f.nom_fichier_sd_gr,
+            "schema_directeur_graphic_document_id": filename_to_graphic_document_id.get(
+                f.nom_fichier_sd_gr or ""
+            ),
             "geom": from_shape(f.geom, srid=2169),
             "source_url": zip_url,
         }
@@ -416,6 +493,7 @@ def ingest_commune(
         "zones_qe": len(qe_values),
         "nq_pap": len(nq_values),
         "documents_ingested": len(filename_to_document_id),
+        "graphic_documents_ingested": len(filename_to_graphic_document_id),
     }
 
 

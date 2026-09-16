@@ -70,3 +70,23 @@ async def test_real_parcel_resolves_real_nq_pap_coefficients(
     assert match.dl_max == pytest.approx(115.0)
     assert match.written_document is not None
     assert "plan d’aménagement" in match.written_document.text.lower()
+
+
+async def test_real_pap_qe_zone_resolves_its_real_graphic_map_document(
+    async_db_session: AsyncSession,
+) -> None:
+    """097D00240002285 (Schengen) falls in a real ZONES_QE polygon whose
+    NOM_FICHIER_GR graphic-part PDF was actually fetched from the source
+    ZIP and stored locally (not just a filename reference) — see
+    ingestion/ingest_pag_zones.py and DECISIONS.md."""
+    parcel_id = await _parcel_id(async_db_session, "097D00240002285")
+    zoning = await get_pag_zoning(async_db_session, parcel_id)
+
+    assert len(zoning.pap_qe_zones) >= 1
+    match = zoning.pap_qe_zones[0]
+    assert match.graphic_document_filename == "113_QE_Schengen"
+    assert match.graphic_document is not None
+    assert match.graphic_document.document_id is not None
+    # A real map PDF has no useful text to extract — unlike a written
+    # regulation's DocumentReference, `text` is genuinely null here.
+    assert match.graphic_document.text is None

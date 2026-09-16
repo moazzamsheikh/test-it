@@ -120,11 +120,15 @@ Read the actual assessment brief (`assessment_sheet_luxembourg.pdf`) directly ra
 
 9 new tests, 90 total, all passing. Both endpoints verified live against real parcels — the PDF renders as a genuinely professional 7-page document (cover with map, zoning summary with confidence badges, one block per constraint with consequence/source, applicable-documents table, authorisations, open questions, footer with data freshness + disclaimer + page numbers).
 
-**What's still open in M4**: M4.3 (comparing this output point-by-point against the real PAG-Géoportail baseline report in the README) hasn't been done yet.
+**M4.3 — baseline comparison**: a research pass found the real PAG-Géoportail report (map.geoportail.lu's PAG theme, "Rapport — Règles urbanistiques applicables à un terrain donné") — an async, email-delivered, FME-generated PDF, confirmed by reading the actual current `geoportailv3` open-source project rather than guessing. The government's own 2015 sample PDF (commune of Nommern) 404s live but was recovered via the Internet Archive. Wrote the brief's required point-by-point comparison in README.md: honest on both sides — their report goes deeper on full per-article legal text and diagram-illustrated dimensional building rules (from the real règlement sur les bâtisses) plus glossaries and a full disclaimer page; this platform is ahead on delivery speed, machine-readable JSON output, explicit per-field confidence flagging, verified determinism, and overlay-constraint breadth (21 layers vs. PAG/PAP-only in the sample studied).
+
+**M4 is now fully done** (M4.1 JSON report, M4.2 PDF generation, M4.3 baseline comparison).
+
+**Real, honest gap surfaced while writing the README comparison, not yet fixed**: the README's own "What works today" status table and several other sections are now significantly stale — still describing a 2-commune, no-M4, no-national-legislation state from well before this session's work. Flagged to the user rather than silently left wrong or silently rewritten as an unrequested side task.
 
 ## Plan for the rest of the assessment
 
-1. **M4.3**: fetch and study the real PAG-Géoportail baseline report, write the point-by-point README comparison the brief asks for.
+1. **README refresh** — the status table/architecture sections need updating to reflect 8 communes, M2's full closure, M3's minimal retrieval core, and M4 — flagged to the user, not yet actioned (a real scope decision, not a small fix).
 2. **M3, the rest**: hybrid (dense+lexical) retrieval once an embedding provider is configured, reranking, the chatbot UI, parcel-scoped conversation memory.
 3. **M5, completed properly**: a real multi-procedure, retrieval-backed assistant once M3 exists — likely dropped deliberately given time, unless the above land comfortably early.
 

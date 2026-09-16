@@ -45,7 +45,12 @@ async def get_document_reference(
             source_url=document.source_url,
             article_ref=chunks[0].article_ref,
             text=chunks[0].text,
+            document_id=document.id,
         )
     return DocumentReference(
-        title=document.title or "", source_url=document.source_url, article_ref=None, text=None
+        title=document.title or "",
+        source_url=document.source_url,
+        article_ref=None,
+        text=None,
+        document_id=document.id,
     )

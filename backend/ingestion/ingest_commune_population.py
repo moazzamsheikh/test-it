@@ -18,15 +18,19 @@ import io
 
 import httpx
 import structlog
-from sqlalchemy import create_engine, select, update
+from sqlalchemy import create_engine, func, select, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.models.cadastre import Commune
+from app.models.enums import AccessMethod, SourceStatus
+from app.models.provenance import Source
 
 logger = structlog.get_logger(__name__)
 
+_SOURCE_NAME = "LUSTAT/STATEC — commune population (SDMX)"
 _LUSTAT_URL = (
     "https://lustat.statec.lu/rest/data/LU1,DF_X021/all?dimensionAtObservation=AllDimensions"
 )
@@ -56,6 +60,31 @@ def _fetch_latest_population_by_lau2(user_agent: str) -> dict[str, int]:
 
 
 def ingest(session: Session, user_agent: str) -> dict[str, int]:
+    source_stmt = (
+        insert(Source)
+        .values(
+            name=_SOURCE_NAME,
+            description="Real STATEC/LUSTAT SDMX REST API — commune population, "
+            'dataflow DF_X021 ("Population par canton et commune").',
+            source_url=_LUSTAT_URL,
+            access_method=AccessMethod.api,
+            publisher="STATEC (Institut national de la statistique et des études économiques)",
+            last_fetch_at=func.now(),
+            last_success_at=func.now(),
+            last_status=SourceStatus.ok,
+        )
+        .on_conflict_do_update(
+            index_elements=[Source.name],
+            set_={
+                "last_fetch_at": func.now(),
+                "last_success_at": func.now(),
+                "last_status": SourceStatus.ok,
+            },
+        )
+        .returning(Source.id)
+    )
+    source_id = session.execute(source_stmt).scalar_one()
+
     population_by_lau2 = _fetch_latest_population_by_lau2(user_agent)
 
     commune_codes = set(session.execute(select(Commune.lau2_code)).scalars().all())
@@ -72,6 +101,8 @@ def ingest(session: Session, user_agent: str) -> dict[str, int]:
     unmatched = commune_codes - population_by_lau2.keys()
     if unmatched:
         logger.warning("ingest.commune_population.unmatched", codes=sorted(unmatched))
+
+    session.execute(update(Source).where(Source.id == source_id).values(documents_ingested=matched))
     return {"matched": matched, "unmatched": len(unmatched)}
 
 
