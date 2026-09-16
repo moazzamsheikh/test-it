@@ -88,11 +88,31 @@ Triggered by an honest scope-risk conversation: with the deadline likely at or v
 
 8 new tests, 64 total, all passing throughout.
 
+## 2026-09-16 (cont'd) — M2 core gap closed: all 8 required communes, all 8 building bylaws
+
+Went back and closed the biggest, most explicitly-required M2 gap: deep ingestion for the remaining 6 of 8 brief-named communes (only Luxembourg City + Wiltz were done before). The existing pipelines were already fully generic — no per-commune hardcoding to undo — so this was real per-commune research (finding each commune's real PAG dataset via data.public.lu's stable API) plus a config change, not new architecture.
+
+**Parcels/buildings/addresses + PAG/PAP zoning, all 8 communes:** 110,168 parcels (up from 40,291), 68,162 buildings, all 8 communes' real PAG `ZONAGE`/`ZONES_QE`/`NQ_PAP` data ingested — the axis-order self-detection built for the original 2 communes worked unmodified across all 6 new ones. Two real bugs caught and fixed at this scale: a genuine duplicate natural key in Sanem's own source shapefile (deduplicated, logged, not hidden), and our own Luxembourg City PAG URL expiring mid-session (data.public.lu's known dated-URL-expiry issue, now confirmed to affect PAG datasets too, not just PCN/BD-Adresses — refreshed via the same stable API).
+
+**Building bylaws, all 8 communes (a category missing for all 8, not just the new 6):** every real PDF found by hand per-commune (brief's own words: "no central repository — commune website only"), a new `pdf_extraction.py` (pypdf) built and hardened against two real, live-confirmed PDF-layout failure modes (labels separated from body text by some export tools; cross-references causing over-splitting) — both degrade honestly to a whole-document chunk rather than fabricate structure. 4 of 8 communes split cleanly per-article; 4 fall back to whole-document, reported exactly as measured.
+
+**Test hygiene:** fixed two pre-existing tests that hardcoded assumptions which broke at real 8-commune scale (a 2-commune allowlist; a `building_id` UUID that goes stale on every re-ingestion since buildings, unlike parcels, have no stable natural key) — real fragility surfaced by actually running the pipeline at scale, not by code review.
+
+**EVAL.md re-run:** document precision 87%→81%, article precision 68%→58% — an honest, expected drop from a much larger corpus competing for the same golden-set queries (spot-checked: real semantic overlap between documents, not a retrieval bug). Reported as measured.
+
+12 new/updated tests, 66 total, all passing.
+
+**Commune population** (`ingestion/ingest_commune_population.py`): STATEC's population dataset isn't a flat downloadable file (checked before, see DECISIONS.md) but is real exposed through LUSTAT's SDMX REST API (`lustat.statec.lu/rest/...`, dataflow `DF_X021`, "Population par canton et commune", 1821–present). 100/100 real communes matched by LAU2 code; Luxembourg City resolves to 137,678 (2026). 2 new tests.
+
+**SPARQL-based amendment-chain resolution** (the named +8pt bonus item): found the real SPARQL endpoint (`data.legilux.public.lu/sparqlendpoint` — the human-facing `/sparql` URL only ever serves the Angular SPA shell regardless of `Accept` header; the real endpoint was found by fetching the site's own JS bundle and grepping for literal "sparql" strings) and the real JOLux predicates it needs (`jolux:isMemberOf`, `jolux:isRealizedBy`, `jolux:dateApplicability`/`dateEndApplicability`, and — for the one law with no `Consolidation` nodes at all, `dechets_2012`'s texte coordonné — `jolux:dateEntryInForce`/`dateNoLongerInForce` as the same information on the "jo" node itself). New `legislation_versions` table (migration `15e63c62a9cf`) stores each real version window; `ingestion/ingest_legislation_versions.py` queries all 9 already-ingested laws (30 real windows total, all 9 resolved) and links each to our own ingested `Document` where the window matches (via a new `ingestion/legilux_eli.py` deriving both "work" and "expression" ELIs from the filestore URLs we already fetch, avoiding 9 hand-typed identifiers that could drift). `app/services/legislation_versions.py::get_version_in_force` + `GET /api/v1/legislation/version-at` answer "given a law and a date, which real version was in force" — verified live: ACDU (loi du 19 juillet 2004) on 2024-01-01 correctly resolves to the real `consolide/20231001` snapshot, the same Document we already ingested full text for. Real, load-bearing finding this surfaced: `dechets_2012`'s own JOLux record says our ingested snapshot has been `no-longer-in-force` since 2015-04-03, contradicting the `LegalStatus.in_force` tag `ingest_national_legislation.py` gave it — left as-is rather than silently changed (flagged in DECISIONS.md; a retroactive fix deserves its own reviewed decision). 10 new tests.
+
+**What's still honestly incomplete in M2** after this pass: PAP QE coefficient tables and graphic-part PDFs (still unparsed — a different, harder problem: table extraction from DOCX/PDF, not yet built). Population data and SPARQL amendment-chain resolution are now done.
+
 ## Plan for the rest of the assessment
 
-1. **M2, remaining gaps**: 6 of the 8 required deep-ingestion communes (Esch-sur-Alzette, Differdange, Dudelange, Schengen, Junglinster, Sanem) still need PAG/PAP/bylaw ingestion — only Luxembourg City and Wiltz are done. PAP QE coefficient tables and graphic-part PDFs remain unparsed.
-2. **M4 — Report + PDF** is the next highest-value gap (currently 0 points) — the JSON schema is fully specified in the brief and much of the underlying data already exists in this backend.
-3. **M3, the rest**: hybrid (dense+lexical) retrieval once an embedding provider is configured, reranking, the chatbot UI, parcel-scoped conversation memory.
+1. **M4 — Report + PDF** is now the single highest-value gap (currently 0 points) — the JSON schema is fully specified in the brief and much of the underlying data already exists in this backend.
+2. **M3, the rest**: hybrid (dense+lexical) retrieval once an embedding provider is configured, reranking, the chatbot UI, parcel-scoped conversation memory.
+3. **M2, one remaining gap**: PAP QE coefficients/graphics — real but lower-value than M4/M3 given current scoring math.
 4. **M5, completed properly**: a real multi-procedure, retrieval-backed assistant once M3 exists — likely dropped deliberately given time, unless the above land comfortably early.
 
 The vision hasn't changed: fewer modules built to a real, defensible standard beats five built shallowly. Everything above is chosen so each module either directly unblocks the next one, or stands alone as a genuinely working, testable piece if time runs out before the rest.

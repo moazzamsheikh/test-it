@@ -58,6 +58,15 @@ ingest-national-legislation:  ## Ingest the M2.3/M2.4 national legislation corpu
 ingest-commune-registry:  ## Ingest real official website URLs for all 102 communes (M2.4)
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_commune_registry
 
+ingest-building-bylaws:  ## Ingest real building bylaws for the 8 deep-ingestion communes (M2.3/M2.4)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_building_bylaws
+
+ingest-commune-population:  ## Ingest real commune population from STATEC/LUSTAT (M2.4)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_commune_population
+
+ingest-legislation-versions:  ## Ingest real SPARQL amendment-chain windows for the national legislation corpus (M2.4 bonus)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_legislation_versions
+
 eval:  ## Run the M3.4 golden-set retrieval eval, writes EVAL.md
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m eval.run_eval
 
