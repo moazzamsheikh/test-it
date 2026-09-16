@@ -48,7 +48,14 @@ def async_engine() -> AsyncEngine:
 async def async_db_session(async_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
     connection = await async_engine.connect()
     transaction = await connection.begin()
-    session = AsyncSession(bind=connection)
+    # expire_on_commit=False matches app/core/db.py's real SessionLocal —
+    # without it, a service that commits mid-request (several legitimately
+    # do: overlays.py, slope.py, legilux_dynamic.py) expires every other
+    # already-loaded ORM object in the session too, and a later attribute
+    # access on one of THOSE raises a real MissingGreenlet error in this
+    # fixture's manually-bound session (never seen in production, which
+    # sets this already — caught by the test suite, not anticipated).
+    session = AsyncSession(bind=connection, expire_on_commit=False)
     try:
         yield session
     finally:

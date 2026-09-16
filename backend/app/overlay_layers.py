@@ -137,7 +137,23 @@ _NATURA2000_BIRDS_DOCUMENT_URLS = {
 OVERLAY_LAYERS: list[OverlayLayer] = [
     OverlayLayer("pag_zoning", "PAG zoning", "urbanisme", 698, True, _GEOPORTAIL_MAP),
     OverlayLayer("pap_approuves", "PAP (approuvés)", "urbanisme", 696, False, _GEOPORTAIL_MAP),
-    OverlayLayer("pos", "POS perimeters", "urbanisme", 710, True, _GEOPORTAIL_MAP),
+    OverlayLayer(
+        "pos",
+        "POS perimeters",
+        "urbanisme",
+        710,
+        True,
+        _GEOPORTAIL_MAP,
+        # Real GetFeatureInfo attribute, verified live — carries a direct
+        # per-feature Legilux link (this WMS layer's own real attribute
+        # name is "LienMemori"), reusing the same dynamic mechanism as
+        # ZPIN/ZPS. Distinct from the static `findel_servitude` citation
+        # (a different WMS layer, 3212): this one points at whichever RGD
+        # this specific POS zone's own attribute currently references — for
+        # the real "Aéroport et environs" zone that's a later 2020
+        # amendment, not the original 2006 RGD Findel's own layer cites.
+        document_url_detail_key="LienMemori",
+    ),
     OverlayLayer(
         "psl",
         "Plan directeur sectoriel logement (PSL)",
@@ -238,6 +254,12 @@ OVERLAY_LAYERS: list[OverlayLayer] = [
         573,
         True,
         _GEOPORTAIL_MAP,
+        # Real GetFeatureInfo attribute, verified live — the government's own
+        # field name really is missing its trailing "l" ("grand-duca", not
+        # "grand-ducal"); not a typo in this codebase (see DECISIONS.md).
+        # Carries a direct per-feature Legilux link exactly like ZPIN, so
+        # this reuses the same dynamic lazy-ingestion mechanism unchanged.
+        document_url_detail_key="Publication du règlement grand-duca",
     ),
     OverlayLayer(
         "heritage_ssmn",
