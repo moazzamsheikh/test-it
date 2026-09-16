@@ -56,6 +56,15 @@ class OverlayLayer:
     # holding that link. Resolved dynamically at request time, not listed
     # here statically — see app/services/legilux_dynamic.py.
     document_url_detail_key: str | None = None
+    # For layers where each real feature is designated by its OWN separate
+    # RGD, but (unlike ZPIN) the feature's own attributes carry only an
+    # identifying code (Natura 2000's real `SITECODE`), not a direct link —
+    # a static SITECODE -> Legilux URL mapping, verified against the real
+    # government site list for every site intersecting our two target
+    # communes specifically (see DECISIONS.md). Same "known instance" scope
+    # limit as `document_url_by_commune`: doesn't cover Luxembourg's other
+    # real Natura 2000 sites nationally without more entries.
+    document_url_by_sitecode: dict[str, str] | None = None
 
 
 _GEOPORTAIL_MAP = "https://map.geoportail.lu/theme/main"
@@ -77,6 +86,51 @@ _FLOOD_DOCUMENT_URLS = {
     "0807": (
         "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2022/03/30/a187/jo/fr/"
         "html/eli-etat-leg-rgd-2022-03-30-a187-jo-fr-html.html"
+    ),
+}
+
+# Verified directly against environnement.public.lu's own real Natura 2000
+# site table (fetched and parsed by hand, not an AI-summarized read — see
+# DECISIONS.md on why that distinction matters) — every SITECODE below was
+# confirmed live to intersect a real parcel in one of our two target
+# communes, and every document_url below was fetched and its real extracted
+# title checked to match the expected site name exactly (e.g. LU0001018 ->
+# "Vallée de la Mamer et de l'Eisch") before being added here.
+_NATURA2000_HABITATS_DOCUMENT_URLS = {
+    "LU0001018": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2025/06/13/a242/jo/fr/"
+        "html/eli-etat-leg-rgd-2025-06-13-a242-jo-fr-html.html"
+    ),
+    "LU0001022": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2022/10/28/a548/jo/fr/"
+        "html/eli-etat-leg-rgd-2022-10-28-a548-jo-fr-html.html"
+    ),
+    "LU0001026": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2023/10/06/a647/jo/fr/"
+        "html/eli-etat-leg-rgd-2023-10-06-a647-jo-fr-html.html"
+    ),
+    "LU0001005": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2023/05/24/a261/jo/fr/"
+        "html/eli-etat-leg-rgd-2023-05-24-a261-jo-fr-html.html"
+    ),
+    "LU0001006": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2023/05/24/a262/jo/fr/"
+        "html/eli-etat-leg-rgd-2023-05-24-a262-jo-fr-html.html"
+    ),
+}
+
+_NATURA2000_BIRDS_DOCUMENT_URLS = {
+    "LU0002017": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2023/10/06/a644/jo/fr/"
+        "html/eli-etat-leg-rgd-2023-10-06-a644-jo-fr-html.html"
+    ),
+    "LU0002007": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2023/10/06/a661/jo/fr/"
+        "html/eli-etat-leg-rgd-2023-10-06-a661-jo-fr-html.html"
+    ),
+    "LU0002013": (
+        "https://data.legilux.public.lu/filestore/eli/etat/leg/rgd/2023/05/24/a275/jo/fr/"
+        "html/eli-etat-leg-rgd-2023-05-24-a275-jo-fr-html.html"
     ),
 }
 
@@ -133,10 +187,22 @@ OVERLAY_LAYERS: list[OverlayLayer] = [
         ),
     ),
     OverlayLayer(
-        "natura2000_habitats", "Natura 2000 — habitats", "environnement", 540, True, _GEOPORTAIL_MAP
+        "natura2000_habitats",
+        "Natura 2000 — habitats",
+        "environnement",
+        540,
+        True,
+        _GEOPORTAIL_MAP,
+        document_url_by_sitecode=_NATURA2000_HABITATS_DOCUMENT_URLS,
     ),
     OverlayLayer(
-        "natura2000_oiseaux", "Natura 2000 — birds", "environnement", 533, True, _GEOPORTAIL_MAP
+        "natura2000_oiseaux",
+        "Natura 2000 — birds",
+        "environnement",
+        533,
+        True,
+        _GEOPORTAIL_MAP,
+        document_url_by_sitecode=_NATURA2000_BIRDS_DOCUMENT_URLS,
     ),
     OverlayLayer(
         "reserves_naturelles",

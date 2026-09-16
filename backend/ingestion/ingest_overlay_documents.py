@@ -132,6 +132,9 @@ def ingest(session: Session) -> list[Document]:
         if layer.document_url_by_commune is not None:
             for commune_code, document_url in layer.document_url_by_commune.items():
                 to_ingest.setdefault(document_url, (layer.label, f"{layer.code}_{commune_code}"))
+        if layer.document_url_by_sitecode is not None:
+            for sitecode, document_url in layer.document_url_by_sitecode.items():
+                to_ingest.setdefault(document_url, (layer.label, f"{layer.code}_{sitecode}"))
 
     documents = []
     for document_url, (label, cache_key) in to_ingest.items():

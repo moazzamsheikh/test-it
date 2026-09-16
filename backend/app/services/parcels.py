@@ -152,6 +152,8 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
             document_urls.add(layer.document_url)
         if layer.document_url_by_commune is not None:
             document_urls.update(layer.document_url_by_commune.values())
+        if layer.document_url_by_sitecode is not None:
+            document_urls.update(layer.document_url_by_sitecode.values())
     document_ids_by_url: dict[str, Any] = {}
     if document_urls:
         doc_rows = (
@@ -183,6 +185,11 @@ async def get_parcel_detail(session: AsyncSession, cadastral_id: str) -> ParcelD
             if layer.document_url_by_commune is not None:
                 effective_document_url = layer.document_url_by_commune.get(
                     row.admin_commune_code or ""
+                )
+            elif layer.document_url_by_sitecode is not None:
+                sitecode = (result.detail or {}).get("SITECODE")
+                effective_document_url = layer.document_url_by_sitecode.get(
+                    sitecode if isinstance(sitecode, str) else ""
                 )
             document_id = document_ids_by_url.get(effective_document_url or "")
         constraints.append(
