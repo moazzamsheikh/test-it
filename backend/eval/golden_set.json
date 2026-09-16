@@ -1,0 +1,163 @@
+[
+  {
+    "question": "Combien de classes existent pour les établissements classés ?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 3"
+  },
+  {
+    "question": "Quelle autorité est compétente pour autoriser les établissements de la classe 1 ?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 4"
+  },
+  {
+    "question": "Pendant combien de jours l'avis de demande d'autorisation est-il affiché dans la commune ?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 10"
+  },
+  {
+    "question": "Quel recours est ouvert devant le tribunal administratif pour un établissement classé ?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 19"
+  },
+  {
+    "question": "Quels sont les objectifs de la politique de l'aménagement du territoire ?",
+    "expected_document_title_contains": "aménagement du territoire",
+    "expected_article_ref": "Art. 1"
+  },
+  {
+    "question": "Qu'est-ce que le Conseil supérieur de l'aménagement du territoire ?",
+    "expected_document_title_contains": "aménagement du territoire",
+    "expected_article_ref": "Art. 4"
+  },
+  {
+    "question": "Comment un plan directeur sectoriel est-il rendu obligatoire ?",
+    "expected_document_title_contains": "aménagement du territoire",
+    "expected_article_ref": "Art. 9"
+  },
+  {
+    "question": "Quel est le champ d'application de la loi relative à la gestion des déchets ?",
+    "expected_document_title_contains": "gestion des déchets",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelles sont les conditions de l'aide au logement ?",
+    "expected_document_title_contains": "aide au logement",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelles sont les servitudes liées aux radiophares d'alignement de l'aéroport de Findel ?",
+    "expected_document_title_contains": "Aéroport et environs",
+    "expected_article_ref": "Art. 19"
+  },
+  {
+    "question": "Quelle est la zone d'aéroport définie par le POS Aéroport et environs ?",
+    "expected_document_title_contains": "Aéroport et environs",
+    "expected_article_ref": "Art. 14"
+  },
+  {
+    "question": "Quelles sont les servitudes radioélectriques liées au radar primaire à Findel ?",
+    "expected_document_title_contains": "Aéroport et environs",
+    "expected_article_ref": "Art. 22"
+  },
+  {
+    "question": "Quelle est la zone protégée d'intérêt national désignée sous le nom de Grunewald ?",
+    "expected_document_title_contains": "Grunewald",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quel règlement grand-ducal rend obligatoire le plan directeur sectoriel logement ?",
+    "expected_document_title_contains": "logement",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quel règlement grand-ducal rend obligatoire le plan directeur sectoriel paysages ?",
+    "expected_document_title_contains": "paysages",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quel règlement grand-ducal rend obligatoire le plan directeur sectoriel transports ?",
+    "expected_document_title_contains": "transports",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelles zones sont couvertes par le règlement grand-ducal sur les zones d'activités économiques ?",
+    "expected_document_title_contains": "zones d'activités",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelles cartes des zones inondables sont déclarées obligatoires pour l'Alzette et la Wark ?",
+    "expected_document_title_contains": "Alzette",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelles cartes des zones inondables sont déclarées obligatoires pour la Sûre supérieure et la Wiltz ?",
+    "expected_document_title_contains": "Sûre supérieure",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelle est la zone de protection autour des captages d'eau souterraine Siwebueren ?",
+    "expected_document_title_contains": "Siwebueren",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelle est la procédure pour obtenir une autorisation de bâtir au Luxembourg ?",
+    "expected_document_title_contains": "Autorisation de b",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quel est le seuil d'exemption pour l'autorisation de bâtir ?",
+    "expected_document_title_contains": "Autorisation de b",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Que définit la loi concernant l'aménagement communal et le développement urbain ?",
+    "expected_document_title_contains": "aménagement communal",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelle est la définition d'une zone spéciale de conservation Natura 2000 ?",
+    "expected_document_title_contains": "protection de la nature",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelle loi protège les monuments nationaux au Luxembourg ?",
+    "expected_document_title_contains": "patrimoine culturel",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelles sont les exigences d'accessibilité des lieux ouverts au public ?",
+    "expected_document_title_contains": "accessibilité",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quelle est la loi relative à l'eau au Luxembourg ?",
+    "expected_document_title_contains": "relative à l'eau",
+    "expected_article_ref": null
+  },
+  {
+    "question": "Quels comités d'accompagnement existent pour les établissements classés ?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 14"
+  },
+  {
+    "question": "Quelles sont les sanctions pénales pour infraction à la loi sur les établissements classés ?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 25"
+  },
+  {
+    "question": "Quand la loi sur les établissements classés du 10 juin 1999 est-elle entrée en vigueur ?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 30"
+  },
+  {
+    "question": "Quel est le programme directeur d'aménagement du territoire ?",
+    "expected_document_title_contains": "aménagement du territoire",
+    "expected_article_ref": "Art. 5"
+  },
+  {
+    "question": "Combien coûte l'installation d'une piscine solaire au Groenland ?",
+    "expected_document_title_contains": null,
+    "expected_article_ref": null,
+    "note": "Deliberately unanswerable from this corpus — tests that retrieval returns nothing usable rather than a false-positive top hit (M3.2's explicit 'I don't have a source for that' requirement)."
+  }
+]
