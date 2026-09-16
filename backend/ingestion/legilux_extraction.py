@@ -28,7 +28,15 @@ def extract_legilux_document(html: str) -> tuple[str, list[LegiluxArticle]]:
     division, so each becomes its own retrievable chunk rather than one
     giant blob (matches the project's existing per-article PAG chunking)."""
     soup = BeautifulSoup(html, "html.parser")
-    title_el = soup.find("h1")
+    h1 = soup.find("h1")
+    # A consolidated law's <h1> nests the real short title as its first <p>,
+    # followed by a table of amending acts (also real content, but that's
+    # amendment-history metadata, not the document's name) — verified live
+    # against a real 84-article consolidated law. Taking the whole h1's text
+    # would run the two together with no separator. A single-act RGD's <h1>
+    # has just the one <p>, so this is backward-compatible with every
+    # document already ingested (see DECISIONS.md).
+    title_el = h1.find("p") if h1 else None
     title = title_el.get_text(strip=True) if title_el else ""
 
     body = soup.find("div", class_="richtext_body")
