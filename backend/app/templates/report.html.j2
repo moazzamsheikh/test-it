@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Parcel report — {{ report.parcel.id }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2.2cm 1.8cm 2.6cm 1.8cm;
+    @bottom-center {
+      content: "Data as of {{ data_as_of }} — this report does not replace consultation of the official texts, which prevail. — Page " counter(page) " of " counter(pages);
+      font-size: 7.5pt;
+      color: #555;
+      width: 100%;
+      text-align: center;
+    }
+  }
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 10pt;
+    color: #1a1a1a;
+    line-height: 1.4;
+  }
+  h1 { font-size: 20pt; margin: 0 0 4pt 0; }
+  h2 { font-size: 13pt; margin: 18pt 0 6pt 0; border-bottom: 1.5pt solid #1a1a1a; padding-bottom: 3pt; }
+  h3 { font-size: 10.5pt; margin: 10pt 0 3pt 0; }
+  .cover { page-break-after: always; }
+  .cover .subtitle { color: #555; font-size: 11pt; margin-bottom: 14pt; }
+  .cover .map-extract { width: 100%; max-height: 11cm; object-fit: contain; border: 0.75pt solid #ccc; }
+  .cover .map-missing { border: 0.75pt dashed #999; padding: 40pt 10pt; text-align: center; color: #777; }
+  .kv-table { width: 100%; border-collapse: collapse; margin: 6pt 0 12pt 0; }
+  .kv-table td { padding: 3pt 6pt; vertical-align: top; }
+  .kv-table td.k { color: #555; width: 32%; }
+  .confidence { display: inline-block; padding: 1pt 6pt; border-radius: 3pt; font-size: 8pt; font-weight: bold; }
+  .confidence.high { background: #d7f0d7; color: #1a5c1a; }
+  .confidence.medium { background: #fdf0c8; color: #7a5c00; }
+  .confidence.low { background: #fbe0c8; color: #8a3d00; }
+  .confidence.not_extracted { background: #eee; color: #666; }
+  .constraint-block { margin-bottom: 9pt; padding: 6pt 8pt; border-left: 3pt solid #ccc; }
+  .constraint-block.applies { border-left-color: #c02020; }
+  .constraint-block .type { font-weight: bold; }
+  .constraint-block .meta { color: #555; font-size: 8.5pt; margin-top: 2pt; }
+  table.docs { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  table.docs th, table.docs td { border: 0.5pt solid #ccc; padding: 4pt 5pt; text-align: left; }
+  table.docs th { background: #f0f0f0; }
+  ul.checklist { padding-left: 16pt; }
+  ul.checklist li { margin-bottom: 4pt; }
+  .empty-note { color: #777; font-style: italic; }
+  .section { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>Parcel Regulatory Report</h1>
+  <div class="subtitle">
+    {{ report.parcel.id }}
+    {% if report.parcel.commune %} — {{ report.parcel.commune }}{% endif %}
+    — Section {{ report.parcel.section }}
+  </div>
+
+  {% if map_image_base64 %}
+    <img class="map-extract" src="data:image/png;base64,{{ map_image_base64 }}" alt="Parcel location map extract">
+  {% else %}
+    <div class="map-missing">No map extract could be generated for this parcel.</div>
+  {% endif %}
+
+  <table class="kv-table">
+    <tr><td class="k">Cadastral ID</td><td>{{ report.parcel.id }}</td></tr>
+    <tr><td class="k">Commune</td><td>{{ report.parcel.commune or "—" }}</td></tr>
+    <tr><td class="k">Section</td><td>{{ report.parcel.section }}</td></tr>
+    <tr><td class="k">Area (geometry)</td><td>{{ "%.1f"|format(report.parcel.area_m2) }} m²</td></tr>
+    <tr><td class="k">Area (declared)</td>
+      <td>
+        {% if report.parcel.area_declared_m2 is not none %}
+          {{ "%.1f"|format(report.parcel.area_declared_m2) }} m²
+        {% else %}
+          <span class="empty-note">not available in the source cadastre</span>
+        {% endif %}
+      </td>
+    </tr>
+    <tr><td class="k">Addresses</td>
+      <td>
+        {% if report.addresses %}
+          {% for a in report.addresses %}{{ a.street_name }} {{ a.house_number }}{% if a.locality %}, {{ a.locality }}{% endif %}<br>{% endfor %}
+        {% else %}
+          <span class="empty-note">no address registered on this parcel</span>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Zoning summary</h2>
+  <table class="kv-table">
+    <tr><td class="k">PAG zone</td><td>{{ report.zoning.pag_zone_label or "—" }}{% if report.zoning.pag_zone %} ({{ report.zoning.pag_zone }}){% endif %}</td></tr>
+    <tr><td class="k">PAG regulation</td>
+      <td>{% if report.zoning.pag_document_url %}<a href="{{ report.zoning.pag_document_url }}">{{ report.zoning.pag_document_url }}</a>{% else %}<span class="empty-note">no PAG zone found for this parcel</span>{% endif %}</td>
+    </tr>
+    <tr><td class="k">PAP</td>
+      <td>
+        {% if report.zoning.pap_type %}
+          {{ report.zoning.pap_type }}{% if report.zoning.pap_reference %} — {{ report.zoning.pap_reference }}{% endif %}
+          {% if report.zoning.pap_document_url %}<br><a href="{{ report.zoning.pap_document_url }}">{{ report.zoning.pap_document_url }}</a>{% endif %}
+        {% else %}
+          <span class="empty-note">no PAP applies to this parcel</span>
+        {% endif %}
+      </td>
+    </tr>
+    <tr><td class="k">Sectoral plans</td>
+      <td>{% if report.zoning.sectoral_plans %}{{ report.zoning.sectoral_plans|join(", ") }}{% else %}<span class="empty-note">none apply</span>{% endif %}</td>
+    </tr>
+  </table>
+
+  <h3>Building parameters
+    <span class="confidence {{ report.building_parameters.extraction_confidence }}">{{ report.building_parameters.extraction_confidence|replace("_", " ") }}</span>
+  </h3>
+  <table class="kv-table">
+    <tr><td class="k">Max height</td><td>{{ report.building_parameters.max_height_m if report.building_parameters.max_height_m is not none else "not extracted" }}{% if report.building_parameters.max_height_m is not none %} m{% endif %}</td></tr>
+    <tr><td class="k">Max storeys</td><td>{{ report.building_parameters.max_storeys if report.building_parameters.max_storeys is not none else "not extracted" }}</td></tr>
+    <tr><td class="k">Setback (front)</td><td>{{ report.building_parameters.setback_front_m if report.building_parameters.setback_front_m is not none else "not extracted" }}{% if report.building_parameters.setback_front_m is not none %} m{% endif %}</td></tr>
+    <tr><td class="k">Setback (side)</td><td>{{ report.building_parameters.setback_side_m if report.building_parameters.setback_side_m is not none else "not extracted" }}{% if report.building_parameters.setback_side_m is not none %} m{% endif %}</td></tr>
+    <tr><td class="k">Setback (rear)</td><td>{{ report.building_parameters.setback_rear_m if report.building_parameters.setback_rear_m is not none else "not extracted" }}{% if report.building_parameters.setback_rear_m is not none %} m{% endif %}</td></tr>
+    <tr><td class="k">Max footprint ratio (COS)</td><td>{{ report.building_parameters.max_footprint_ratio if report.building_parameters.max_footprint_ratio is not none else "not extracted" }}</td></tr>
+    <tr><td class="k">Max density (DL)</td><td>{{ report.building_parameters.max_density if report.building_parameters.max_density is not none else "not extracted" }}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Constraints</h2>
+  {% for c in report.constraints %}
+    <div class="constraint-block {{ 'applies' if c.applies else '' }}">
+      <span class="type">{{ c.type|replace("_", " ") }}</span> —
+      {{ "applies" if c.applies else "does not apply" }}
+      <span class="confidence {{ c.confidence }}">{{ c.confidence }}</span>
+      <div>{{ c.consequence }}</div>
+      {% if c.detail %}<div class="meta">Detail: {{ c.detail }}</div>{% endif %}
+      <div class="meta">Source: <a href="{{ c.source_url }}">{{ c.source_url }}</a></div>
+    </div>
+  {% else %}
+    <p class="empty-note">No overlay constraints were computed for this parcel.</p>
+  {% endfor %}
+</div>
+
+<div class="section">
+  <h2>Applicable documents</h2>
+  {% if report.applicable_documents %}
+    <table class="docs">
+      <thead>
+        <tr><th>Title</th><th>Type</th><th>Date</th><th>Legal status</th><th>Relevance</th></tr>
+      </thead>
+      <tbody>
+        {% for d in report.applicable_documents %}
+          <tr>
+            <td><a href="{{ d.url }}">{{ d.title }}</a></td>
+            <td>{{ d.type|replace("_", " ") }}</td>
+            <td>{{ d.date if d.date else "—" }}</td>
+            <td>{{ d.legal_status|replace("_", " ") }}</td>
+            <td>{{ d.relevance }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty-note">No applicable documents were found for this parcel.</p>
+  {% endif %}
+</div>
+
+<div class="section">
+  <h2>Required authorisations</h2>
+  {% if report.required_authorisations %}
+    <ul class="checklist">
+      {% for a in report.required_authorisations %}<li>☐ {{ a }}</li>{% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty-note">Not determined — see open questions below.</p>
+  {% endif %}
+</div>
+
+<div class="section">
+  <h2>Open questions</h2>
+  {% if report.open_questions %}
+    <ul class="checklist">
+      {% for q in report.open_questions %}<li>{{ q }}</li>{% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty-note">None.</p>
+  {% endif %}
+</div>
+
+</body>
+</html>

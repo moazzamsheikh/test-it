@@ -8,8 +8,10 @@ cadastral_id values instead of the fixed routes.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.db import get_session
 from app.schemas.parcel import (
     BuildableEnvelope,
@@ -17,6 +19,7 @@ from app.schemas.parcel import (
     ParcelIdentifyResponse,
     ParcelSummary,
 )
+from app.schemas.report import ParcelReport
 from app.schemas.slope import SlopeResult
 from app.services.geometry_analysis import compute_buildable_envelope
 from app.services.parcels import (
@@ -25,6 +28,9 @@ from app.services.parcels import (
     get_parcel_id,
     identify_by_point,
 )
+from app.services.report import build_parcel_report
+from app.services.report_map import render_parcel_map_extract
+from app.services.report_pdf import render_report_pdf
 from app.services.slope import get_or_compute_slope
 
 router = APIRouter(prefix="/parcels", tags=["parcels"])
@@ -93,6 +99,39 @@ async def buildable_envelope(
         envelope_area_m2=area_m2,
         is_empty=geojson is None,
         geometry_wgs84_geojson=geojson,
+    )
+
+
+@router.get("/{cadastral_id}/report", response_model=ParcelReport)
+async def report(
+    cadastral_id: str,
+    session: AsyncSession = Depends(get_session),
+) -> ParcelReport:
+    result = await build_parcel_report(session, cadastral_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="parcel not found")
+    return result
+
+
+@router.get("/{cadastral_id}/report.pdf")
+async def report_pdf(
+    cadastral_id: str,
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    result = await build_parcel_report(session, cadastral_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="parcel not found")
+    parcel_id = await get_parcel_id(session, cadastral_id)
+    map_png = (
+        await render_parcel_map_extract(session, parcel_id, settings.crawler_user_agent)
+        if parcel_id is not None
+        else None
+    )
+    pdf_bytes = render_report_pdf(result, map_png)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{cadastral_id}-report.pdf"'},
     )
 
 
