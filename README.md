@@ -4,21 +4,30 @@ Spatial + regulatory data platform for architects: given a Luxembourg cadastral
 parcel, resolve the regulations that apply to it and answer questions about it
 with citations to official sources.
 
-> **Status: M1.1-M1.5 are real and working together; M2 has a real PAG/PAP zoning slice; M5 has one genuine, scoped-down slice.**
-> Open the map, click a parcel or search an address, see a real Wiltz/Luxembourg
-> City parcel with its geometry highlighted, its regulatory overlays (PAG
-> zoning, Natura 2000, flood zones, servitudes, etc.), its geometry analysis
-> (road frontage, nearby-parcel distances, LiDAR-derived slope, a
-> manual-setback buildable envelope), and its **real PAG/PAP zone
-> classification** — resolved via an actual spatial join against ACT's own
-> per-commune PAG data, with the real regulatory article text (and real
-> COS/CUS/CSS/DL planning coefficients for not-yet-built zones), not a WMS
-> point-sample — verified in a real browser, not just curl. The side panel
-> also shows one real, citation-backed government procedure (building-permit
-> application) — a structured display, explicitly not a chatbot. National
-> legislation ingestion and retrieval/chatbot (M3) do not exist yet, and M5
-> proper depends on M3. This README describes what actually runs today, not
-> what is planned — see [Roadmap](#roadmap).
+> **Status: M1 and M2 are complete (including the +8pt Legilux amendment-chain bonus); M4 (structured report + PDF) is complete; M3 has a real, evaluated lexical retrieval core; M5 has one genuine, scoped-down slice.**
+> Open the map, click a parcel or search an address, see a real parcel (any
+> of 8 deep-ingested communes — Luxembourg City, Esch-sur-Alzette,
+> Differdange, Dudelange, Wiltz, Schengen, Junglinster, Sanem) with its
+> geometry highlighted, its regulatory overlays (PAG zoning, Natura 2000,
+> flood zones, servitudes, etc.), its geometry analysis (road frontage,
+> nearby-parcel distances, LiDAR-derived slope, a manual-setback buildable
+> envelope), and its **real PAG/PAP zone classification** — resolved via an
+> actual spatial join against ACT's own per-commune PAG data, with the real
+> regulatory article text, real COS/CUS/CSS/DL planning coefficients for
+> not-yet-built zones, and real, servable PAP QE/NQ graphic-part map PDFs —
+> not a WMS point-sample. National legislation (9 real laws, including
+> SPARQL-based amendment-chain resolution: given a law and a date, the real
+> version in force then), all 8 communes' building bylaws, and the full
+> 100-commune registry (population, website, CMS/hosting) are ingested. A
+> parcel's full regulatory picture is available both as structured JSON
+> (`GET /api/v1/parcel/{id}/report`) and as a professional, byte-deterministic
+> A4 PDF (`GET /api/v1/parcel/{id}/report.pdf`) — compared point-by-point
+> against the government's own PAG-Géoportail baseline report, see below. A
+> minimal real lexical retrieval core exists with a measured 32-question
+> golden-set eval (see `EVAL.md`); the full hybrid/reranked chatbot UI (M3)
+> and M5's multi-procedure decision engine are not built yet. This README
+> describes what actually runs today, not what is planned — see
+> [Roadmap](#roadmap).
 
 ---
 
@@ -30,17 +39,21 @@ with citations to official sources.
 | EPSG:2169 (LUREF) ↔ WGS84 reprojection, verified correct (backend AND frontend) | ✅ |
 | Provenance schema (sources / documents / chunks), migrated & reversible | ✅ |
 | M1 spatial schema (communes, parcels, buildings, addresses), migrated & reversible | ✅ |
-| Real PCN + BD-Adresses ingestion for Wiltz + Luxembourg City, idempotent (`make ingest`) | ✅ |
 | M1.2 address search API — trigram fuzzy match, sub-15ms warm (see below) | ✅ |
 | M1.3 parcel identify (by click, by cadastral reference) + full detail API | ✅ |
 | M1.1 map UI — Next.js + OpenLayers, 3 real switchable WMS base layers, click-to-identify, address search, side panel | ✅ |
 | M1.4 regulatory overlays — 18 real WMS layers + 3 derived from M2 (zone verte, PAP NQ/QE perimeters), 21 total, per-parcel intersects | ✅ |
 | M1.5 geometry analysis — road frontage, neighbour distances, LiDAR slope, manual-setback buildable envelope | ✅ |
+| **M2 — deep ingestion, all 8 brief-named communes** (Luxembourg, Esch-sur-Alzette, Differdange, Dudelange, Wiltz, Schengen, Junglinster, Sanem): real PAG/PAP zoning + written regulation text, real COS/CUS/CSS/DL coefficients, real PAP QE/NQ graphic-part map PDFs (177 files, servable via API), real building bylaws | ✅ |
+| **M2 — commune registry**, all 100 real communes: official website, geoportal slug, LAU code, real STATEC population, CMS/hosting research (`SCALING.md`) | ✅ |
+| **M2 — national legislation**: 9 real laws ingested, per-article chunked, status dashboard (`GET /api/v1/sources/status`) | ✅ |
+| **M2 bonus (+8pt) — SPARQL amendment-chain resolution**: given a law + a date, the real Legilux-consolidated version in force then (`GET /api/v1/legislation/version-at`) | ✅ |
+| **M3 (partial)** — real lexical (Postgres full-text) retrieval core, measured on a real 32-question golden set (`EVAL.md`: 81% document precision, 58% article accuracy) | ✅ |
+| **M4 — structured report + PDF**, complete: `GET /api/v1/parcel/{id}/report` (brief's exact JSON schema) and `.../report.pdf` (WeasyPrint, byte-deterministic, real map extract), compared point-by-point against the government's own PAG-Géoportail baseline | ✅ |
 | M5 (partial) — one real procedure (building permit), citation-backed, not a chatbot | ✅ |
-| M2 (partial) — real PAG/PAP zoning + real COS/CUS/CSS/DL coefficients for both target communes | ✅ |
-| 44 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
+| 90 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
 | `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
-| M2 (legislation ingestion) · M3 chatbot · M4 report/PDF | ⛔ not started |
+| M3 — the rest (hybrid dense+lexical retrieval, reranking, chatbot UI, parcel-scoped conversation memory) · M5 — the rest (decision engine, authority routing, sequencing) | ⛔ not started |
 
 ---
 
@@ -64,10 +77,21 @@ python3 -m venv .venv
 cd ..
 make migrate                    # applies Alembic migrations to head
 
-# 4. Load the real corpus (reference data + PCN parcels/buildings + BD-Adresses,
-#    filtered to Wiltz + Luxembourg City). Downloads ~190MB once, cached under
-#    data/cache/ (gitignored); subsequent runs reuse the cache and are idempotent.
+# 4. Load the real corpus. `make ingest` covers M1 (parcels/buildings/
+#    addresses for the 8 brief-named communes); the M2 targets after it
+#    cover PAG/PAP zoning + graphic maps, national legislation (+ the SPARQL
+#    amendment-chain bonus), the 100-commune registry, and building bylaws.
+#    Downloads several hundred MB total once, cached under data/cache/
+#    (gitignored); subsequent runs reuse the cache and are idempotent.
 make ingest
+make ingest-pag-zones
+make ingest-national-legislation
+make ingest-legislation-versions
+make ingest-commune-registry
+make ingest-commune-population
+make ingest-building-bylaws
+make ingest-overlay-documents   # M1.4 Tier-1 sectoral-plan RGD citations
+make ingest-procedures          # M5's one real procedure (building permit)
 
 # 5. Run the API
 make run                        # or: cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
@@ -85,6 +109,14 @@ Try it against real data:
 curl "http://localhost:8000/api/v1/addresses/search?q=Rue+Dominique+Lang"
 curl "http://localhost:8000/api/v1/parcels/054A00242005292"
 curl "http://localhost:8000/api/v1/parcels/identify?lon=6.173833&lat=49.619564"
+
+# M4 — structured report + PDF
+curl "http://localhost:8000/api/v1/parcels/097D00240002285/report"
+curl -o report.pdf "http://localhost:8000/api/v1/parcels/097D00240002285/report.pdf"
+
+# M2 — status dashboard, and the SPARQL amendment-chain bonus
+curl "http://localhost:8000/api/v1/sources/status"
+curl "http://localhost:8000/api/v1/legislation/version-at?work_eli=http://data.legilux.public.lu/eli/etat/leg/loi/2004/07/19/n1&on_date=2024-01-01"
 ```
 
 Or open **http://localhost:3000** — search an address or click the map. The
@@ -102,8 +134,9 @@ make test
 The database is exposed on **`localhost:5433`** (mapped from container `5432`, to
 avoid colliding with a local Postgres).
 
-Useful targets: `make lint`, `make typecheck`, `make test`, `make downgrade`,
-`make revision m="message"`, `make seed-reference`, `make ingest-parcels`,
+Useful targets: `make lint`, `make typecheck`, `make test`, `make eval` (M3.4
+golden-set eval, writes `EVAL.md`), `make downgrade`, `make revision
+m="message"`, `make seed-reference`, `make ingest-parcels`,
 `make ingest-addresses`.
 
 ---
@@ -163,9 +196,15 @@ regulations for any merged commune. Full reasoning in
 [`backend/ingestion/`](backend/ingestion/) loads the actual PCN shapefile
 (pyshp + shapely — pure Python, no GDAL, so `make ingest` needs nothing beyond
 `pip install -e .[dev]`) and BD-Adresses CSV from data.public.lu, filtered to
-Wiltz + Luxembourg City. Verified: 40,291 parcels, 28,891 buildings, 29,831
-parcel↔building links (a real multi-parcel-building minimum-overlap threshold
-was needed — see DECISIONS.md), 23,680 addresses, 99.8% resolved to a parcel.
+the 8 brief-named communes (Luxembourg City, Esch-sur-Alzette, Differdange,
+Dudelange, Wiltz, Schengen, Junglinster, Sanem). Verified: 110,168 parcels,
+68,162 buildings, 70,798 parcel↔building links (a real multi-parcel-building
+minimum-overlap threshold was needed — see DECISIONS.md), 53,252 addresses,
+99.8% resolved to a parcel. The pipeline scaled from the original 2 communes
+to all 8 with zero architecture changes (config + two small real bugs fixed
+— a duplicate natural key in one commune's own source shapefile, an expired
+dated download URL — see DECISIONS.md), which is itself the strongest
+evidence this is real, generic ingestion and not per-commune special-casing.
 Both parcel/building and address ingestion are idempotent (upsert on natural
 keys; buildings have none, so they're scoped delete-then-reinsert instead —
 see DECISIONS.md) — re-running produces identical row counts, verified.
@@ -243,6 +282,63 @@ with PostGIS to **~1.5mm**. Verified with a two-line Node script before any
 map code was written, not assumed correct because the numbers looked
 reasonable (see DECISIONS.md).
 
+### M2 — ingestion and source coverage
+Every ingestion script shares the same `sources`/`documents`/`chunks`
+provenance pattern (idempotent upsert on `source_url`+`sha256`, logged
+failures rather than aborted runs, tracked in the real status dashboard —
+`GET /api/v1/sources/status`). Real per-commune PAG/PAP data (GML + DOCX +
+PDF, fetched via HTTP range requests against multi-GB ZIPs — no full
+download needed) resolves each parcel's zone via an exact spatial join, not
+a WMS point-sample; PAP "Nouveau Quartier" zones carry real COS/CUS/CSS/DL
+planning coefficients as genuine GIS attributes; PAP QE/NQ graphic-part map
+PDFs (177 real files, 1.1GB) are fetched from the same ZIPs and served
+directly (`GET /api/v1/documents/{id}/file` — the first real use of the
+`Document.storage_path` field). National legislation (9 real laws) is
+ingested via the existing Legilux HTML extractor, and the **SPARQL amendment-
+chain bonus** (`GET /api/v1/legislation/version-at`) queries Legilux's real
+JOLux SPARQL endpoint (found by reading the site's own JS bundle, since the
+human-facing URL only serves an SPA shell) to resolve which real consolidated
+version of a law was in force on a given date — this also caught a real
+inconsistency where one already-ingested law's `legal_status` tag
+contradicted the real amendment data (flagged, not silently patched). The
+100-commune registry (website, LAU code, population from STATEC's real SDMX
+API, CMS/hosting research) and all 8 communes' building bylaws (`pypdf`,
+with an honest whole-document fallback where a PDF's layout defeats
+per-article splitting) round out M2. Full reasoning trail in DECISIONS.md.
+
+### M3 — retrieval (partial)
+A real lexical retrieval function (`app/services/retrieval.py::search_chunks`)
+over the `tsv` generated column already present on every chunk since the M1/M2
+schema design (`to_tsvector('simple', text)`, GIN-indexed) — `to_tsquery`
+with OR-joined, stopword-filtered tokens and `ts_rank_cd(..., 2)` for
+document-length normalisation (both fixed real bugs that first returned
+near-zero results, see DECISIONS.md). Measured against a real 32-question
+golden set (`EVAL.md`): 81% document-level precision, 58% article-level
+accuracy — reported as measured, including the expected drop after the
+corpus grew 8×. Dense/hybrid retrieval (`chunks.embedding`, pgvector + HNSW,
+already schema-ready) isn't populated — no embedding provider is configured
+in this environment. No reranking, chatbot UI, or conversation memory yet.
+
+### M4 — structured report + PDF
+`GET /api/v1/parcel/{cadastral_id}/report` matches the brief's exact JSON
+schema, assembled in `app/services/report.py` by reshaping data that already
+exists (M1's parcel detail, M2's PAG/PAP zoning and overlay constraints) —
+no new computation invented. Honest, not fabricated, where the corpus
+genuinely can't answer: `building_parameters` only has real numbers (COS/DL)
+for PAP Nouveau Quartier zones (`confidence: "medium"`); height/storeys/
+setbacks are `null`/`"not_extracted"` everywhere, matching the brief's own
+explicit instruction; `required_authorisations` is honestly `[]` since M5's
+decision engine doesn't exist yet. `GET /api/v1/parcel/{id}/report.pdf`
+renders the *same* data through one Jinja2 template via WeasyPrint (chosen
+over ReportLab/Typst — see Technical choices) — a real WMS basemap tile with
+the parcel's boundary drawn on top (`app/services/report_map.py`, Pillow,
+cached per parcel) serves as the cover page's map extract. Verified live
+that regenerating the same parcel's PDF produces a byte-identical file — the
+footer's "data as of" timestamp is deliberately derived from real M2.1
+source-tracking data, not wall-clock time, to make that guarantee hold.
+Compared point-by-point against the government's own PAG-Géoportail
+baseline report — see the dedicated section below.
+
 ---
 
 ## Technical choices
@@ -267,6 +363,9 @@ reasonable (see DECISIONS.md).
 | Plain typed ingestion scripts | Small serial batch corpus | Prefect/Dagster (ops overhead now) |
 | `embedding vector(1024)`, multilingual model | FR/DE/LB coverage; self-hostable (cost = compute) | 3072-d API model (cost, no LB) |
 | `legal_status` defaults to `unknown` | Honest ingest-time state; never guess `in_force` | Default in_force (risks citing repealed) |
+| WeasyPrint (HTML+CSS via Jinja2) for M4's PDF | Fastest path to a professional A4 layout reusing this stack's skills; needs real system libs (Pango/cairo) beyond pip | ReportLab (verbose manual x/y layout), Typst (non-Python binary dependency) |
+| M4's PDF cover map: real WMS tile + Pillow-drawn outline, cached per parcel | Matches the brief's literal "in context" requirement using the same public basemap the frontend already uses; caching avoids hammering the government server on every request | A self-contained vector-only rendering (safer determinism, weaker "in context") |
+| M4's PDF footer timestamp derived from `data_freshness`, not `datetime.now()` | The brief requires both a per-page generation timestamp AND a byte-comparable PDF for the same corpus state — a literal wall-clock stamp breaks the second requirement | Wall-clock timestamp (fails determinism) or omitting the timestamp (fails the brief's explicit footer requirement) |
 
 The full decision log with reasoning and rejected alternatives is in
 [DECISIONS.md](DECISIONS.md).
@@ -277,19 +376,27 @@ The full decision log with reasoning and rejected alternatives is in
 
 ```
 docker/postgres/        Custom PostGIS+pgvector image + first-boot extension SQL
-docker-compose.yml      db service (host :5433)
-Makefile                db-up, migrate, seed-reference, ingest, lint, test, …
-data/cache/              Bulk downloads (gitignored) — pcn-shape.zip, addresses.csv
+docker-compose.yml      db service (host :5433) — no backend/frontend service yet, see limitations
+Makefile                db-up, migrate, ingest*, eval, lint, test, run, …
+data/cache/              Bulk downloads + derived files (gitignored) — PCN/BD-Adresses,
+                         PAG ZIPs, pag_graphics/ (real map PDFs), parcel_maps/ (M4 map extracts)
 backend/
   app/core/             Settings, async SQLAlchemy engine, structlog config
-  app/models/           ORM models: provenance schema + M1 spatial schema
-  app/schemas/          Pydantic API response models
-  app/api/v1/           FastAPI routers (addresses, parcels)
-  app/services/         Query logic behind the routers (address search, parcel lookups)
+  app/models/           ORM models: provenance, M1 spatial schema, PAG/PAP zoning, overlays
+  app/schemas/          Pydantic API response models (incl. the M4 report schema)
+  app/api/v1/           FastAPI routers: addresses, parcels (+ report/report.pdf), overlays,
+                        procedures, sources (status dashboard), legislation (SPARQL bonus),
+                        documents (serves stored graphic PDFs)
+  app/services/         Query/business logic behind the routers — address search, parcel
+                        lookups, PAG/PAP zoning join, overlays, report assembly, PDF
+                        rendering (report_pdf.py), map-extract rendering (report_map.py)
+  app/templates/        Jinja2 HTML template for the M4 PDF report
   app/reference_data/   Small, tracked CSVs (communes, natures, cadastral crosswalk)
   alembic/              Migrations (env.py filters PostGIS-owned tables)
-  ingestion/            Real PCN + BD-Adresses ingestion scripts, cache-aware downloader
-  tests/                pytest: schema constraints, real-data e2e, API
+  ingestion/            Real ingestion scripts: PCN/BD-Adresses, PAG/PAP zoning + graphic
+                        PDFs, national legislation + SPARQL amendment-chain versions,
+                        commune registry + population, building bylaws, overlay documents
+  tests/                pytest: schema constraints, real-data e2e, API (90 tests)
   pyproject.toml        Deps + ruff/black/mypy/pytest config
 frontend/
   app/                  Next.js App Router (page.tsx orchestrates state)
@@ -314,15 +421,18 @@ frontend/
   so they don't replace this input; the brief's own explicit manual-input
   escape hatch still applies here (see DECISIONS.md).
 - **Real PAG/PAP zoning is genuinely partial in the source data.** After
-  ingesting both target communes' real PAG datasets and fixing a real
-  axis-order bug (Wiltz's export specifically), zone coverage is 65.0%
-  (Luxembourg City) / 53.8% (Wiltz) of real parcels — confirmed against the
-  live geoportail WMS that this is a real gap in the *downloadable* dataset
-  (not our parsing), consistent with an in-progress PAG revision for
-  Luxembourg City (see DECISIONS.md). An uncovered parcel gets an honest
-  empty result, not a fabricated zone. PAP QE's graphic-part PDFs (~250MB,
-  no text extraction planned yet) are referenced by filename only, not
-  ingested as documents.
+  ingesting all 8 target communes' real PAG datasets and fixing two real
+  axis-order/duplicate-key bugs along the way, zone coverage varies by
+  commune — confirmed against the live geoportail WMS that gaps are real
+  gaps in the *downloadable* dataset (not our parsing), consistent with
+  in-progress PAG revisions for some communes (see DECISIONS.md). An
+  uncovered parcel gets an honest empty result, not a fabricated zone.
+- **PAP QE's DOCX override tables (schéma-directeur code → floor-area %)
+  are captured as raw, full-text-searchable text but not parsed into
+  structured fields** beyond the one zone category (MIX_u) originally
+  verified — a deliberate scope choice (see DECISIONS.md) once the graphic-
+  part PDFs (the other named part of this same gap) were prioritized and
+  closed instead.
 - **No declared/legal area source found.** PCN's `PARCELLES` layer has no
   area field at all; `area_declared_m2` is always `null` until a source is
   found (see DECISIONS.md) — never fabricated.
@@ -334,57 +444,126 @@ frontend/
 - **Address search doesn't cover FR/DE/LB street-name variants** beyond a
   small abbreviation table — real alias data (CACLR's `ALIAS.RUE`) isn't
   ingested yet.
-- No ingestion of national legislation, building bylaws, retrieval, or report
-  logic yet (the rest of M2, M3, M4). M5 has exactly one real procedure
-  ingested (building permit) — a structured display, not a chatbot/retrieval
-  system; a second procedure or multi-document search needs M3 first.
-- Migrations/ingestion/API are run from a host virtualenv (`backend/.venv`); a
-  containerised backend service and `make demo` (seeded small dataset) land
-  later.
+- **M3 is a real but minimal core** — lexical (Postgres full-text) retrieval
+  only, measured on a real 32-question golden set (`EVAL.md`). No dense/
+  hybrid retrieval (no embedding provider configured in this environment,
+  though the pgvector/HNSW schema is ready), no reranking, no chatbot UI, no
+  parcel-scoped conversation memory.
+- **M5 has exactly one real procedure** ingested (building permit) — a
+  structured citation-backed display, not a decision engine or chatbot. The
+  brief's declarative rule set (authorisation triggers, sequencing,
+  authority routing) hasn't been built; a real, deliberate scope decision
+  given M1/M2/M4's depth, not an oversight.
+- Migrations/ingestion/API are run from a host virtualenv (`backend/.venv`);
+  no backend Dockerfile exists yet (only the Postgres service is
+  containerised) — WeasyPrint's system libraries (Pango/cairo/gdk-pixbuf)
+  will need an `apt-get install` step there. `make demo` (seeded small
+  dataset) hasn't been built either.
 - Embedding dimension is pinned to 1024; changing the model to another
   dimension is an explicit migration.
 - Production use of the Luxembourg geoportal (`ws.geoportail.lu`) requires ACT
   domain approval — to be documented, not a blocker for the assessment. The
-  actually-working public endpoint we found is `wms.geoportail.lu/opendata/service`
-  (see SOURCES.md).
+  actually-working public endpoints we found are `wms.geoportail.lu/opendata/service`
+  (base layers) and `wms.geoportail.lu/public_map_layers/service` (M1.4
+  thematic overlays) — see SOURCES.md.
+
+---
+
+## M4.3 — comparison against the PAG-Géoportail baseline
+
+The brief names the Luxembourg state's own PAG-Géoportail parcel report as
+the baseline to study and compare against. Its real feature name is
+**"Rapport — Règles urbanistiques applicables à un terrain donné"** (button:
+"Commander rapport"), inside `map.geoportail.lu`'s PAG theme
+(`map.geoportail.lu/theme/pag`, the successor to the legacy `pag.geoportail.lu`).
+
+Two things worth being precise about, since a live end-to-end run wasn't
+possible here: (1) it's genuinely **not** an instant download — clicking a
+parcel and submitting an email address triggers an async **FME-generated**
+PDF, uploaded to an internal ownCloud, with the download link emailed to
+the user; this was confirmed by reading the actual current source of
+`geoportailv3` (the open-source project that runs `map.geoportail.lu`,
+repository last updated 2026-09-08), not guessed. (2) The actual sample
+studied is a real, official government-published example for the commune
+of **Nommern** (recovered via the Internet Archive, since the government's
+own link to it now 404s) — the underlying generation mechanism in the
+current source code is unchanged, but this specific 36-page sample is from
+2015/2019, so an exact visual re-check against a freshly generated report
+for a different commune wasn't possible.
+
+**What their report contains, in order:** a cover page (aerial orthophoto,
+parcel outlined in magenta, commune coat of arms); a PAG section with the
+full legend of every zone/overlay category in the country, followed by one
+illustrated sub-section *per article that actually applies* to the parcel
+(full legal text + a small clipped map showing exactly which zone that
+article covers), including a COS/CUS/CSS/DL coefficients table wherever a
+PAP "nouveau quartier" zone applies; a glossary of urbanistic coefficients;
+linked attachments for the commune's schéma directeur and PAP NQ/QE
+written+graphic parts; a long, diagram-illustrated section of dimensional
+building rules (setbacks, roof forms, garages, verandas, fences, antennas)
+straight from the commune's règlement sur les bâtisses; a second glossary
+(~30 construction terms); and a detailed legal disclaimer page.
+
+**Point-by-point:**
+
+| Aspect | PAG-Géoportail (baseline) | This platform | Verdict |
+|---|---|---|---|
+| Delivery | Async — email + ownCloud link, no direct download | Synchronous `GET .../report.pdf`, instant | **Better** — no email dependency, no wait |
+| Structured data | PDF only, no machine-readable output | Same data available as JSON (`GET .../report`) before PDF rendering | **Better** — a chatbot/other client can consume it directly |
+| Confidence on extracted values | None — every figure presented as flat fact | Every building parameter/constraint carries an explicit `confidence` (`high`/`medium`/`not_extracted`) | **Better** — matches the brief's own non-negotiable rule; their report can't distinguish a verified figure from an assumption |
+| Determinism | Not documented; FME-generated, no stated guarantee | Verified live: identical corpus state → byte-identical PDF | **Better** — an explicit, tested guarantee |
+| Overlay breadth | PAG/PAP-focused; the Nommern sample shows no flood/Natura 2000/heritage/servitude layers at all | 21 real overlay layers (flood zones, Natura 2000, heritage, airport servitude, gas network, water protection, etc.) alongside PAG/PAP | **Better** — broader constraint coverage per parcel |
+| Per-article legal text depth | Full text of *every* applicable article, individually illustrated with its own clipped zone map | Cites the applicable document + one general zone map; doesn't split multiple applicable articles into individually-illustrated blocks | **Worse** — real, acknowledged content-depth gap |
+| Building envelope rules (setbacks, roof forms, garages, fences, etc.) | Detailed, diagram-illustrated, straight from the real règlement sur les bâtisses | Only COS/CUS/CSS/DL numbers, and only for PAP "Nouveau Quartier" zones — everything else `not_extracted`, exactly as the brief instructs when extraction isn't reliable | **Worse** — an honest, not a hidden, gap (see M1.5/M2 limitations above) |
+| Glossary / terminology | Two dedicated annexes (~30+ terms) for a non-specialist reader | None | **Worse** — assumes the reader already knows COS/CUS/CSS/DL etc. |
+| Legal disclaimer | Full dedicated page, detailed terms of use | One footer line ("this report does not replace consultation of the official texts, which prevail") | **Worse** — real but low-effort gap to close later |
+| PAP NQ/QE document bundling | Full written+graphic parts and schéma directeur linked as separate attachments | Graphic-part PDFs are directly servable (`GET /api/v1/documents/{id}/file`, see M2.4) via `applicable_documents`; no schéma-directeur ingestion yet | **Mixed** — ours is more directly downloadable where it exists, but doesn't bundle the schéma directeur |
+
+Net honest assessment: the state's report is deeper on legal-text narrative
+and dimensional building rules for the zones it *does* cover (because an
+FME workflow with years of tuning can embed full article text and hand-
+drawn diagrams); this platform is broader on constraint coverage, more
+transparent about extraction confidence, faster to deliver, and
+machine-consumable — closer to a real product surface than a one-off
+government PDF generator, but genuinely thinner on narrative legal depth
+today.
 
 ---
 
 ## Roadmap
 
-1. ~~**M1.4 — Regulatory overlays**~~ ✅ done — 18 real thematic WMS layers
-   (PAG, Natura 2000, flood zones, servitudes, etc.), config-driven, cached
-   per-parcel intersects, plus 2 of the brief's named categories (zone
-   verte, PAP NQ/QE perimeters) derived from M2's real PAG data once that
-   existed — see DECISIONS.md. Only HV electricity easements remain a
-   genuine gap (no such public layer exists at all).
-2. ~~**M1.5 — Geometry analysis**~~ ✅ done (stretch, per the brief itself) —
-   road frontage, neighbour distances, LiDAR-derived slope, manual-setback
-   buildable envelope.
-3. ~~**M5 — Procedure assistant**~~ ⚠️ partial, out of order at the user's
-   explicit request — one real, citation-backed government procedure
-   (building permit), no spec text available for M5 (unlike M1.4/M1.5),
-   scoped to avoid the M2/M3 dependency. Honestly labelled as a structured
-   document display, not a chatbot — see DECISIONS.md.
-4. ~~**M2 — PAG/PAP zoning**~~ ⚠️ partial, per a real requirement dictated via
-   video (not the assessment PDF — see `PAG_PAP_SPEC.md`): real per-commune
-   PAG open data (GML + DOCX) for both target communes, ingested via a real
-   spatial join, resolving each parcel's actual zone and citing the real
-   regulation text — not the M1.4 WMS point-sample, which has no
-   classification attribute at all. Also real COS/CUS/CSS/DL planning
-   coefficients (footprint ratio, floor area ratio, soil-sealing ratio,
-   dwelling density) for `NQ_PAP` ("Nouveau Quartier") zones — genuine GIS
-   attributes, not parsed from document text. Real, documented gaps: PAG
-   zone coverage is genuinely partial in the source data itself (65%/54% of
-   real parcels, confirmed against the live WMS, not a parsing bug — see
-   DECISIONS.md); PAP QE's graphic-part PDFs and NQ's per-project schéma-
-   directeur PDFs aren't ingested yet (filename reference only).
-5. **M2 — the rest**: national legislation via the Legilux SPARQL endpoint
-   (in-force versions only), building bylaws, idempotent + incremental
-   pipeline, status dashboard.
-6. **M4 — Report + PDF**, then **M3 — Hybrid retrieval + chatbot + eval harness**.
-7. **M5, completed** — a real multi-procedure, retrieval-backed assistant once
-   M3 exists; only if time remains.
+1. ~~**M1 — Map, cadastre, addresses**~~ ✅ done — base map/projection, address
+   search, parcel identify, 21 regulatory overlays (18 real WMS layers + 3
+   derived from M2), geometry analysis (frontage, neighbour distances, LiDAR
+   slope, buildable envelope). Only HV electricity easements remain a
+   genuine gap (no such public layer exists at all — see SOURCES.md).
+2. ~~**M2 — Ingestion and source coverage**~~ ✅ done, including the +8pt
+   SPARQL amendment-chain bonus — real PAG/PAP zoning + written regulation
+   text + graphic-part map PDFs for all 8 brief-named communes, real
+   COS/CUS/CSS/DL coefficients for PAP Nouveau Quartier zones, 9 real
+   national laws with SPARQL-based amendment-chain resolution, the full
+   100-commune registry (population, website, CMS/hosting), and all 8
+   communes' building bylaws. The one deliberately deferred sub-item:
+   structured DOCX coefficient-table parsing beyond the one zone category
+   (MIX_u) originally verified — the raw text is already searchable, just
+   not structured (see DECISIONS.md).
+3. ~~**M4 — Parcel report and PDF generation**~~ ✅ done — the brief's exact
+   JSON schema, a professional byte-deterministic PDF (WeasyPrint) with a
+   real map extract, and the required point-by-point comparison against the
+   government's own PAG-Géoportail baseline report (see above).
+4. **M3 — the rest**: hybrid (dense+lexical) retrieval once an embedding
+   provider is configured, reranking, the chatbot UI, parcel-scoped
+   conversation memory. The lexical core and eval harness already exist and
+   are measured (`EVAL.md`).
+5. **M5, completed properly**: a real declarative rule set (authorisation
+   triggers, authority routing, dependency-ordered sequencing) once M3
+   exists to back it with retrieval — currently one real, citation-backed
+   procedure display, not a decision engine. Likely a deliberate drop or
+   thin stretch given time, per the brief's own scoring guidance that a
+   reasoned drop beats a half-built module.
+6. **Packaging**: a backend Dockerfile (WeasyPrint's system libs need an
+   `apt-get` step) and `make demo` (seeded small dataset) — not built yet;
+   everything above currently runs from a host virtualenv.
 
 Deliverables to accompany the code: `SOURCES.md`, `SCALING.md`, `EVAL.md`, and a
 weekly `PROGRESS.md`.
