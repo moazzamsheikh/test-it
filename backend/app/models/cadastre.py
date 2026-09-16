@@ -52,6 +52,16 @@ class Commune(Base):
     geom: Mapped[WKBElement | None] = mapped_column(
         Geometry(geometry_type="MULTIPOLYGON", srid=2169), default=None
     )
+    # M2.4 commune registry (real, per-commune — see
+    # ingestion/ingest_commune_registry.py/SCALING.md): official website,
+    # real from syvicol.lu's own commune directory, not guessed from a
+    # domain-name pattern. `cms_hosting_provider` is filled only for the
+    # real sample investigated for SCALING.md (deliberately null for the
+    # rest, not fabricated — see PROGRESS.md).
+    website_url: Mapped[str | None] = mapped_column(Text, default=None)
+    geoportal_slug: Mapped[str | None] = mapped_column(Text, default=None)
+    population: Mapped[int | None] = mapped_column(Integer, default=None)
+    cms_hosting_provider: Mapped[str | None] = mapped_column(Text, default=None)
 
 
 class CadastralCommune(Base):
