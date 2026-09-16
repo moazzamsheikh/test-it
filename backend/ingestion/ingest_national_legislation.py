@@ -41,6 +41,7 @@ from app.core.logging import configure_logging
 from app.models.enums import AccessMethod, DocumentType, Language, LegalStatus, SourceStatus
 from app.models.provenance import Chunk, Document, Source
 from ingestion.download_cache import download_cached
+from ingestion.legilux_eli import expression_eli_from_filestore_url
 from ingestion.legilux_extraction import extract_legilux_document
 
 logger = structlog.get_logger(__name__)
@@ -154,15 +155,20 @@ def _ingest_one(session: Session, entry: NationalLawEntry) -> Document | None:
     )
     source_id = session.execute(source_stmt).scalar_one()
 
+    eli = expression_eli_from_filestore_url(entry.url)
+
     existing = session.execute(
         select(Document).where(Document.source_url == entry.url, Document.sha256 == sha256)
     ).scalar_one_or_none()
     if existing is not None:
+        if existing.eli != eli:
+            existing.eli = eli
         logger.info("ingest.national_law.unchanged", key=entry.key, document_id=str(existing.id))
         return existing
 
     document = Document(
         source_id=source_id,
+        eli=eli,
         source_url=entry.url,
         title=title or entry.label,
         publisher=PUBLISHER,

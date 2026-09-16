@@ -184,3 +184,38 @@ class Chunk(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     document: Mapped[Document] = relationship(back_populates="chunks")
+
+
+class LegislationVersion(Base):
+    """A real Legilux consolidation window for one law, from the JOLux SPARQL
+    endpoint (`data.legilux.public.lu/sparqlendpoint`) — the bonus
+    amendment-chain resolution named in the brief.
+
+    Not every window here has full text ingested as a `Document` (that would
+    mean re-ingesting every historical version of every law, a much bigger
+    scope); `document_id` is populated only where the window matches a
+    version we actually ingested. Every window's real `expression_url` is
+    kept regardless, so "what was in force on date X" always has a real
+    answer — either our own ingested Document or a pointer to the real
+    Legilux text.
+    """
+
+    __tablename__ = "legislation_versions"
+    __table_args__ = (
+        UniqueConstraint("version_eli", name="uq_legislation_versions_version_eli"),
+        Index("ix_legislation_versions_work_date", "work_eli", "date_applicability"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("documents.id", ondelete="SET NULL"), default=None
+    )
+
+    work_eli: Mapped[str] = mapped_column(Text, index=True)
+    version_eli: Mapped[str] = mapped_column(Text)
+    expression_url: Mapped[str] = mapped_column(Text)
+    date_applicability: Mapped[date] = mapped_column()
+    date_end_applicability: Mapped[date | None] = mapped_column(default=None)
+    in_force_status: Mapped[str | None] = mapped_column(String(50), default=None)
+
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
