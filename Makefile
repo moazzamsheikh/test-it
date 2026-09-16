@@ -52,5 +52,14 @@ ingest-pag-zones:  ## Ingest M2 real PAG/PAP zoning for the target communes (req
 ingest-overlay-documents:  ## Ingest Tier-1 real sectoral-plan RGDs for the M1.4 overlay layers
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_overlay_documents
 
+ingest-national-legislation:  ## Ingest the M2.3/M2.4 national legislation corpus (see brief §3.3)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_national_legislation
+
+ingest-commune-registry:  ## Ingest real official website URLs for all 102 communes (M2.4)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_commune_registry
+
+eval:  ## Run the M3.4 golden-set retrieval eval, writes EVAL.md
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m eval.run_eval
+
 run:  ## Run the API dev server (requires `make ingest` for real data)
 	cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
