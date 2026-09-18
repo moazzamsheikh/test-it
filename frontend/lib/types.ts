@@ -166,3 +166,23 @@ export interface ParcelDetail extends ParcelSummary {
 export interface ParcelIdentifyResponse {
   parcels: ParcelSummary[];
 }
+
+export interface ChatCitation {
+  ref_id: number;
+  document_title: string;
+  article_ref: string | null;
+  source_url: string;
+}
+
+export interface ChatResponse {
+  answer: string;
+  citations: ChatCitation[];
+  refused: boolean;
+  parcel_cadastral_id: string | null;
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  citations?: ChatCitation[];
+}

@@ -6,6 +6,8 @@ parcels, not fixtures, matching the rest of this project's test style.
 
 from __future__ import annotations
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +15,9 @@ from app.models.cadastre import Parcel
 from app.services.pag_zoning import derive_m14_style_constraints, get_pag_zoning
 
 
-async def _parcel_id_and_commune(session: AsyncSession, cadastral_id: str):
+async def _parcel_id_and_commune(
+    session: AsyncSession, cadastral_id: str
+) -> tuple[uuid.UUID, str | None]:
     row = (
         await session.execute(
             select(Parcel.id, Parcel.admin_commune_code).where(Parcel.cadastral_id == cadastral_id)
@@ -55,9 +59,9 @@ async def test_parcel_with_real_nq_zones_shows_pap_nq_perimeter(
     assert by_code["pap_nq_perimeter"].intersects is True
     assert by_code["pap_nq_perimeter"].overlap_m2 is not None
     assert by_code["pap_nq_perimeter"].overlap_m2 > 0
-    assert "Weimershof WH-07 - Kennedy Sud" in (by_code["pap_nq_perimeter"].detail or {}).get(
-        "denominations", []
-    )
+    denominations = (by_code["pap_nq_perimeter"].detail or {}).get("denominations", [])
+    assert isinstance(denominations, list)
+    assert "Weimershof WH-07 - Kennedy Sud" in denominations
     assert by_code["pap_qe_perimeter"].intersects is True
 
 

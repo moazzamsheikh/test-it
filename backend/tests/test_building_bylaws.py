@@ -33,9 +33,18 @@ async def test_esch_splits_into_real_distinct_articles(async_db_session: AsyncSe
     """Esch-sur-Alzette's real bylaw PDF splits cleanly per-article
     (verified live: 93 fragments, 92 distinct refs) — confirms the
     extractor's per-article path works for a well-formed PDF, not just the
-    whole-document fallback."""
+    whole-document fallback.
+
+    Scoped by the bylaw's own real `source_url`, not just `commune_code ==
+    "0204"` — that alone stopped being unique once M3's fix (see
+    DECISIONS.md) gave every Esch PAG written-part document a real
+    commune_code too, which this test's original query never accounted
+    for."""
+    esch_bylaw_url = next(e.url for e in BUILDING_BYLAWS if e.commune_code == "0204")
     document = (
-        await async_db_session.execute(select(Document).where(Document.commune_code == "0204"))
+        await async_db_session.execute(
+            select(Document).where(Document.source_url == esch_bylaw_url)
+        )
     ).scalar_one()
     chunks = (
         (await async_db_session.execute(select(Chunk).where(Chunk.document_id == document.id)))

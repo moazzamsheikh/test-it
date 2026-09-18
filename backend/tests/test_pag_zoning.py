@@ -4,15 +4,19 @@ real parcels, real assertions, real (sometimes surprising) results."""
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.cadastre import Parcel
+from app.models.enums import DocumentType
+from app.models.provenance import Document
 from app.services.pag_zoning import get_pag_zoning
 
 
-async def _parcel_id(session: AsyncSession, cadastral_id: str):
+async def _parcel_id(session: AsyncSession, cadastral_id: str) -> uuid.UUID:
     return (
         await session.execute(select(Parcel.id).where(Parcel.cadastral_id == cadastral_id))
     ).scalar_one()
@@ -33,6 +37,7 @@ async def test_real_parcel_resolves_to_its_real_pag_zone(async_db_session: Async
     assert match.overlap_m2 > 0
     assert match.document is not None
     assert match.document.article_ref == "Art. 19"
+    assert match.document.text is not None
     assert "forestière" in match.document.text.lower()
 
 
@@ -69,6 +74,7 @@ async def test_real_parcel_resolves_real_nq_pap_coefficients(
     assert match.css_max == pytest.approx(0.8)
     assert match.dl_max == pytest.approx(115.0)
     assert match.written_document is not None
+    assert match.written_document.text is not None
     assert "plan d’aménagement" in match.written_document.text.lower()
 
 
@@ -90,3 +96,28 @@ async def test_real_pap_qe_zone_resolves_its_real_graphic_map_document(
     # A real map PDF has no useful text to extract — unlike a written
     # regulation's DocumentReference, `text` is genuinely null here.
     assert match.graphic_document.text is None
+
+
+async def test_pag_written_and_graphic_documents_all_carry_a_commune_code(
+    async_db_session: AsyncSession,
+) -> None:
+    """Real, live-discovered M2 bug (found while building M3's chat
+    retrieval, fixed in ingestion/ingest_pag_zones.py — see DECISIONS.md):
+    `_get_or_create_written_document`/`_get_or_create_graphic_document`
+    never set `commune_code`, despite `admin_commune_code` being available
+    at every call site. Silent effect since M2: a query scoped to one
+    commune could retrieve another commune's PAP QE/NQ written-part text —
+    exactly the cross-commune leakage M3.1 explicitly says must not
+    happen. This asserts the fix generalises across the real corpus, not
+    just the one parcel other tests in this file happen to check."""
+    rows = (
+        await async_db_session.execute(
+            select(Document.title, Document.commune_code).where(
+                Document.document_type.in_([DocumentType.pag_written, DocumentType.pag_graphic])
+            )
+        )
+    ).all()
+
+    assert len(rows) > 0  # would trivially "pass" on an empty corpus otherwise
+    missing = [title for title, commune_code in rows if commune_code is None]
+    assert missing == []

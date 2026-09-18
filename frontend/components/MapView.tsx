@@ -61,6 +61,7 @@ export default function MapView({ parcelDetail, flyTo, envelopeGeojson, onMapCli
   const [overlayLayerInfos, setOverlayLayerInfos] = useState<OverlayLayerInfo[]>([]);
   const [activeOverlayCodes, setActiveOverlayCodes] = useState<Set<string>>(new Set());
   const [loadingKeys, setLoadingKeys] = useState<Set<string>>(new Set());
+  const [layersPanelVisible, setLayersPanelVisible] = useState(true);
 
   useEffect(() => {
     getOverlayLayers()
@@ -263,33 +264,47 @@ export default function MapView({ parcelDetail, flyTo, envelopeGeojson, onMapCli
         </div>
       )}
       <div className="absolute top-3 right-3 z-10 flex max-h-[80vh] flex-col gap-3 overflow-auto rounded-md bg-white/90 p-2 shadow">
-        <div className="flex flex-col gap-1">
-          {BASE_LAYERS.map((layer) => (
-            <label key={layer.id} className="flex items-center gap-2 text-sm text-zinc-800">
-              <input
-                type="radio"
-                name="base-layer"
-                checked={activeBaseLayer === layer.id}
-                onChange={() => setActiveBaseLayer(layer.id)}
-              />
-              {layer.label}
-            </label>
-          ))}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs font-semibold text-zinc-500">Layers</span>
+          <button
+            type="button"
+            onClick={() => setLayersPanelVisible((v) => !v)}
+            className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
+          >
+            {layersPanelVisible ? "Hide" : "Show"}
+          </button>
         </div>
-        {overlayLayerInfos.length > 0 && (
-          <div className="flex flex-col gap-1 border-t border-zinc-200 pt-2">
-            <span className="text-xs font-semibold text-zinc-500">Regulatory overlays</span>
-            {overlayLayerInfos.map((layer) => (
-              <label key={layer.code} className="flex items-center gap-2 text-sm text-zinc-800">
-                <input
-                  type="checkbox"
-                  checked={activeOverlayCodes.has(layer.code)}
-                  onChange={() => toggleOverlay(layer.code)}
-                />
-                {layer.label}
-              </label>
-            ))}
-          </div>
+        {layersPanelVisible && (
+          <>
+            <div className="flex flex-col gap-1">
+              {BASE_LAYERS.map((layer) => (
+                <label key={layer.id} className="flex items-center gap-2 text-sm text-zinc-800">
+                  <input
+                    type="radio"
+                    name="base-layer"
+                    checked={activeBaseLayer === layer.id}
+                    onChange={() => setActiveBaseLayer(layer.id)}
+                  />
+                  {layer.label}
+                </label>
+              ))}
+            </div>
+            {overlayLayerInfos.length > 0 && (
+              <div className="flex flex-col gap-1 border-t border-zinc-200 pt-2">
+                <span className="text-xs font-semibold text-zinc-500">Regulatory overlays</span>
+                {overlayLayerInfos.map((layer) => (
+                  <label key={layer.code} className="flex items-center gap-2 text-sm text-zinc-800">
+                    <input
+                      type="checkbox"
+                      checked={activeOverlayCodes.has(layer.code)}
+                      onChange={() => toggleOverlay(layer.code)}
+                    />
+                    {layer.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

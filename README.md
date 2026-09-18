@@ -4,7 +4,7 @@ Spatial + regulatory data platform for architects: given a Luxembourg cadastral
 parcel, resolve the regulations that apply to it and answer questions about it
 with citations to official sources.
 
-> **Status: M1 and M2 are complete (including the +8pt Legilux amendment-chain bonus); M4 (structured report + PDF) is complete; M3 has a real, evaluated lexical retrieval core; M5 has one genuine, scoped-down slice.**
+> **Status: M1, M2, M3 and M4 are complete (M2 including the +8pt Legilux amendment-chain bonus); M5 has one genuine, scoped-down slice.**
 > Open the map, click a parcel or search an address, see a real parcel (any
 > of 8 deep-ingested communes — Luxembourg City, Esch-sur-Alzette,
 > Differdange, Dudelange, Wiltz, Schengen, Junglinster, Sanem) with its
@@ -23,11 +23,13 @@ with citations to official sources.
 > (`GET /api/v1/parcel/{id}/report`) and as a professional, byte-deterministic
 > A4 PDF (`GET /api/v1/parcel/{id}/report.pdf`) — compared point-by-point
 > against the government's own PAG-Géoportail baseline report, see below. A
-> minimal real lexical retrieval core exists with a measured 32-question
-> golden-set eval (see `EVAL.md`); the full hybrid/reranked chatbot UI (M3)
-> and M5's multi-procedure decision engine are not built yet. This README
-> describes what actually runs today, not what is planned — see
-> [Roadmap](#roadmap).
+> real, grounded, parcel-scoped chatbot exists: hybrid (lexical + dense)
+> retrieval, LLM-based reranking, inline citations, deterministic refusal
+> on unanswerable questions, and conversation memory — measured on a real
+> 46-question, 6-commune, 4-language golden set (see `EVAL.md`). M5's
+> multi-procedure decision engine is not built yet (one real, scoped-down
+> procedure exists instead). This README describes what actually runs
+> today, not what is planned — see [Roadmap](#roadmap).
 
 ---
 
@@ -48,12 +50,12 @@ with citations to official sources.
 | **M2 — commune registry**, all 100 real communes: official website, geoportal slug, LAU code, real STATEC population, CMS/hosting research (`SCALING.md`) | ✅ |
 | **M2 — national legislation**: 9 real laws ingested, per-article chunked, status dashboard (`GET /api/v1/sources/status`) | ✅ |
 | **M2 bonus (+8pt) — SPARQL amendment-chain resolution**: given a law + a date, the real Legilux-consolidated version in force then (`GET /api/v1/legislation/version-at`) | ✅ |
-| **M3 (partial)** — real lexical (Postgres full-text) retrieval core, measured on a real 32-question golden set (`EVAL.md`: 81% document precision, 58% article accuracy) | ✅ |
+| **M3 — retrieval and chatbot, complete**: hybrid retrieval (lexical + pgvector dense, Reciprocal Rank Fusion), LLM-based reranking, grounded generation with inline `[n]` citations, deterministic pre-generation refusal, parcel-scoped context (M1/M2 geospatial facts + commune-scoped documents), real conversation memory (`chat_messages`), a minimal chat UI. LLM layer abstracted behind a provider interface (Gemini + a tested no-API-key extractive fallback). Measured on a real 46-question, 6-commune, 4-language golden set (`EVAL.md`) | ✅ |
 | **M4 — structured report + PDF**, complete: `GET /api/v1/parcel/{id}/report` (brief's exact JSON schema) and `.../report.pdf` (WeasyPrint, byte-deterministic, real map extract), compared point-by-point against the government's own PAG-Géoportail baseline | ✅ |
 | M5 (partial) — one real procedure (building permit), citation-backed, not a chatbot | ✅ |
-| 90 pytest tests (schema constraints + real-data e2e + API), all passing | ✅ |
+| 111 pytest tests (schema constraints + real-data e2e + API + chatbot pipeline via a deterministic provider swap), all passing | ✅ |
 | `mypy --strict` + ruff + black + ESLint + `tsc --noEmit` clean | ✅ |
-| M3 — the rest (hybrid dense+lexical retrieval, reranking, chatbot UI, parcel-scoped conversation memory) · M5 — the rest (decision engine, authority routing, sequencing) | ⛔ not started |
+| M5 — the rest (declarative decision engine, authority routing, sequencing) | ⛔ not started |
 
 ---
 
@@ -306,18 +308,58 @@ API, CMS/hosting research) and all 8 communes' building bylaws (`pypdf`,
 with an honest whole-document fallback where a PDF's layout defeats
 per-article splitting) round out M2. Full reasoning trail in DECISIONS.md.
 
-### M3 — retrieval (partial)
-A real lexical retrieval function (`app/services/retrieval.py::search_chunks`)
-over the `tsv` generated column already present on every chunk since the M1/M2
-schema design (`to_tsvector('simple', text)`, GIN-indexed) — `to_tsquery`
-with OR-joined, stopword-filtered tokens and `ts_rank_cd(..., 2)` for
-document-length normalisation (both fixed real bugs that first returned
-near-zero results, see DECISIONS.md). Measured against a real 32-question
-golden set (`EVAL.md`): 81% document-level precision, 58% article-level
-accuracy — reported as measured, including the expected drop after the
-corpus grew 8×. Dense/hybrid retrieval (`chunks.embedding`, pgvector + HNSW,
-already schema-ready) isn't populated — no embedding provider is configured
-in this environment. No reranking, chatbot UI, or conversation memory yet.
+### M3 — retrieval and chatbot
+Hybrid retrieval (`app/services/retrieval.py::hybrid_search`): lexical search
+over the `tsv` generated column present on every chunk since the M1/M2 schema
+design (`to_tsvector('simple', text)`, GIN-indexed, OR-joined stopword-filtered
+tokens, `ts_rank_cd(..., 2)` for document-length normalisation — both fixed
+real bugs that first returned near-zero results, see DECISIONS.md) fused with
+dense pgvector cosine search (HNSW-indexed) via Reciprocal Rank Fusion.
+Embeddings come from Gemini's `gemini-embedding-001` (`output_dimensionality`
+pinned to the schema's existing 1024-d column) rather than a self-hosted
+model — this environment's Python (3.14) has no `torch`/`onnxruntime` wheels
+available, verified rather than assumed (see DECISIONS.md). Metadata
+filtering (commune scoping + `legal_status` exclusion) happens in the SQL
+WHERE clause before scoring, per the brief's own wording, not after.
+
+Candidates are reranked by an LLM call (Gemini, structured JSON output) —
+the brief's own sanctioned alternative to a cross-encoder, chosen here
+because the same environment constraint above rules out every standard
+cross-encoder path. The chat pipeline (`app/services/chatbot.py`) then
+assembles a numbered source list mixing retrieved text with real M1/M2
+geospatial facts for the selected parcel, generates a grounded answer with
+inline `[n]` citations, and resolves those citations only against the exact
+source list the model was given — never trusting a freeform citation.
+Refusal ("I don't have a source for that") is a deterministic check before
+generation, not asked of the model's own judgement. Repealed/superseded
+provisions are excluded from retrieval at the SQL level; `unknown`/`draft`
+documents are annotated so the model hedges rather than asserts them as
+settled law. Conversation memory is a real Postgres table
+(`chat_messages`), not an in-process store. The LLM layer is abstracted
+behind a `Protocol` (`app/services/llm/`) with two implementations: a real
+Gemini provider and a tested, no-API-key `ExtractiveProvider` fallback that
+degrades gracefully (used in tests, and as a real safety net if the API
+becomes unavailable) — the actual "swap models without touching business
+logic" requirement, not an aspiration.
+
+A real, serious bug was found and fixed by exercising this for the first
+time: PAG written/graphic documents never had `commune_code` set (a gap
+dating to M2), so a parcel-scoped question could retrieve a different
+commune's PAP regulations — exactly the cross-commune leakage the brief's
+own M3.1 example warns against. Fixed at the source, backfilled across all
+8 communes, and proven with a real-data regression test using a harder case
+than a title check could catch (all 8 communes' building bylaws share the
+identical document title). Full account in DECISIONS.md.
+
+Measured against a real 46-question golden set spanning 6 of the 8 deep
+communes and 4 languages (FR/EN/DE/LB) — see `EVAL.md` for exact retrieval
+precision/recall and generation-level citation accuracy, plus a disclosed
+real constraint: this account's free-tier embedding quota is tight enough
+that dense retrieval fails for some calls, and the system is built to
+degrade to lexical-only rather than fail the request when that happens
+(disclosed in EVAL.md, not hidden). A minimal chat UI (`ChatPanel.tsx`) is
+wired end to end; conversation memory persists per browser session via a
+client-generated id.
 
 ### M4 — structured report + PDF
 `GET /api/v1/parcel/{cadastral_id}/report` matches the brief's exact JSON
@@ -361,11 +403,16 @@ baseline report — see the dedicated section below.
 | Amendment chains as self-FKs + `legal_status` | Right-sized; enables "version in force" queries | Separate versions table (heavier) |
 | ELI nullable-unique, UUID primary key | Communal PDFs/geodata have no ELI | ELI-as-PK (mixed PK strategy) |
 | Plain typed ingestion scripts | Small serial batch corpus | Prefect/Dagster (ops overhead now) |
-| `embedding vector(1024)`, multilingual model | FR/DE/LB coverage; self-hostable (cost = compute) | 3072-d API model (cost, no LB) |
+| `embedding vector(1024)` via Gemini's `gemini-embedding-001` | FR/DE(+LB via cross-lingual proximity) coverage; `output_dimensionality` kept the schema's original 1024-d self-hosted plan unchanged | Self-hosted BGE-m3/e5-large (the original plan — blocked: no `torch`/`onnxruntime` wheels for this environment's Python 3.14, verified) |
 | `legal_status` defaults to `unknown` | Honest ingest-time state; never guess `in_force` | Default in_force (risks citing repealed) |
 | WeasyPrint (HTML+CSS via Jinja2) for M4's PDF | Fastest path to a professional A4 layout reusing this stack's skills; needs real system libs (Pango/cairo) beyond pip | ReportLab (verbose manual x/y layout), Typst (non-Python binary dependency) |
 | M4's PDF cover map: real WMS tile + Pillow-drawn outline, cached per parcel | Matches the brief's literal "in context" requirement using the same public basemap the frontend already uses; caching avoids hammering the government server on every request | A self-contained vector-only rendering (safer determinism, weaker "in context") |
 | M4's PDF footer timestamp derived from `data_freshness`, not `datetime.now()` | The brief requires both a per-page generation timestamp AND a byte-comparable PDF for the same corpus state — a literal wall-clock stamp breaks the second requirement | Wall-clock timestamp (fails determinism) or omitting the timestamp (fails the brief's explicit footer requirement) |
+| M3 reranking is LLM-based (Gemini), not a cross-encoder | Brief explicitly allows either; the environment constraint above rules out cross-encoders (`sentence-transformers`/`fastembed` need `torch`/`onnxruntime`) | Cross-encoder (blocked, same root cause as the embedding pivot) |
+| Reciprocal Rank Fusion for hybrid retrieval | `ts_rank_cd` and cosine similarity have no principled common scale to sum directly; RRF fuses rank order instead | Score normalisation + weighted sum (arbitrary weight tuning, no clean scale) |
+| Chat's `LLMProvider.complete()` takes numbered `sources`, not a flattened prompt string | Makes citation-safety structural — a provider can only cite `ref_id`s it was actually given, and even a no-LLM fallback can produce a real cited answer by assembling them directly | Flattened prompt + free-text citation parsing (more surface for a hallucinated/malformed citation) |
+| `hybrid_search` degrades to lexical-only on an embedding-API failure, with a short fast-fail retry on the live path specifically | M2.1's resilience principle applied to a live request, not just batch ingestion — this account's real embedding quota fails mid-session; a live chat user shouldn't wait minutes for a fallback | Let the request fail (500) or retry with the same patient budget ingestion uses (unacceptable live latency) |
+| Conversation memory is a real `chat_messages` table | An in-process dict is wiped by every `uvicorn --reload` restart, common in dev | In-memory store (fragile, loses "conversation memory within a session" on any restart) |
 
 The full decision log with reasoning and rejected alternatives is in
 [DECISIONS.md](DECISIONS.md).
@@ -444,11 +491,25 @@ frontend/
 - **Address search doesn't cover FR/DE/LB street-name variants** beyond a
   small abbreviation table — real alias data (CACLR's `ALIAS.RUE`) isn't
   ingested yet.
-- **M3 is a real but minimal core** — lexical (Postgres full-text) retrieval
-  only, measured on a real 32-question golden set (`EVAL.md`). No dense/
-  hybrid retrieval (no embedding provider configured in this environment,
-  though the pgvector/HNSW schema is ready), no reranking, no chatbot UI, no
-  parcel-scoped conversation memory.
+- **M3's dense-embedding backfill is quota-constrained in this environment.**
+  This account's free-tier `gemini-embedding-001` quota is tight enough that
+  a full 1,689-chunk backfill doesn't reliably complete in one run — the
+  system is built to be resilient to this (batches are skipped and retried
+  on a later `make embed`; a live chat request degrades to lexical-only
+  rather than fail), and the mechanism itself is verified correct
+  independent of the quota fight (real pgvector cosine-ordering tests
+  against hand-crafted vectors). `EVAL.md` states exactly how much of its
+  measured run reflects lexical vs. dense retrieval, honestly.
+- **No real repealed document exists in this corpus yet** to test M3.2's
+  "never cite a repealed provision as current" against — every ingested
+  document is `in_force` or `unknown`. Verified with a synthetic repealed
+  row in the test suite instead; disclosed in `EVAL.md` rather than silently
+  presented as tested against real data.
+- **Luxembourgish (LB) query support is real but weaker than FR/DE/EN** — no
+  dedicated LB embedding model exists; LB queries rely on cross-lingual
+  embedding proximity to German/French plus lexical exact-token matching on
+  shared vocabulary and proper nouns. A disclosed limitation, not a claim of
+  full LB support (see `app/services/embeddings.py`).
 - **M5 has exactly one real procedure** ingested (building permit) — a
   structured citation-backed display, not a decision engine or chatbot. The
   brief's declarative rule set (authorisation triggers, sequencing,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +12,7 @@ from app.models.cadastre import Parcel
 from app.services.geometry_analysis import compute_buildable_envelope
 
 
-async def _parcel_id(session: AsyncSession, cadastral_id: str):
+async def _parcel_id(session: AsyncSession, cadastral_id: str) -> uuid.UUID:
     return (
         await session.execute(select(Parcel.id).where(Parcel.cadastral_id == cadastral_id))
     ).scalar_one()

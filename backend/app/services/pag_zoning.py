@@ -12,6 +12,7 @@ Ville-Haute address) — never adjusted to look more plausible.
 
 from __future__ import annotations
 
+import re
 import uuid
 
 from sqlalchemy import func, select
@@ -19,9 +20,43 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.cadastre import Parcel
 from app.models.pag import PagZone, PapNqZone, PapQeZone
-from app.schemas.pag import PagZoneMatch, PagZoningInfo, PapNqZoneMatch, PapQeZoneMatch
+from app.schemas.pag import (
+    DocumentReference,
+    PagZoneMatch,
+    PagZoningInfo,
+    PapNqZoneMatch,
+    PapQeZoneMatch,
+)
 from app.schemas.parcel import OverlayConstraint
 from app.services.documents import get_document_reference
+
+_ZONE_LABEL_RE = re.compile(r"Zone\s+([^\[(]+?)\s*[\[(]")
+
+
+def derive_pag_zone_label(category: str, document: DocumentReference | None) -> str:
+    """A real, human-readable zone label ("forestière", "mixte urbaine",
+    ...) for a raw PAG category code ("FOR", "MIX_u", ...) — extracted from
+    the real written-part text itself (which starts "Art. N Zone <label>
+    [<code>]" or "Zone <label> (<code>)") rather than a second, separately-
+    drifting static code->label lookup. Shared by app/services/report.py
+    (M4's JSON/PDF report) and app/services/chatbot.py (M3's geospatial-fact
+    citations) — a real user-facing gap once existed where the chatbot
+    showed the raw code with no explanation of what it meant, while the
+    report already had this exact answer (see DECISIONS.md).
+
+    The exact delimiter is a real, genuine per-commune authoring difference
+    (verified: Luxembourg City/Wiltz use square brackets, Schengen uses
+    parentheses, one document uses guillemets around different wording
+    entirely) — not something to force into one exact format. Falls back to
+    the raw code when no document text is available, or the real title
+    doesn't match either delimiter (an honest, already-known gap, not a
+    fabricated label)."""
+    if document is not None and document.text:
+        match = _ZONE_LABEL_RE.search(document.text)
+        if match:
+            return match.group(1).strip()
+    return category
+
 
 # ACT's own PAG legend groups these four ZONAGE categories under the
 # heading "Zone verte" (agricole/forestière/parc public/verdure) — verified

@@ -67,8 +67,11 @@ ingest-commune-population:  ## Ingest real commune population from STATEC/LUSTAT
 ingest-legislation-versions:  ## Ingest real SPARQL amendment-chain windows for the national legislation corpus (M2.4 bonus)
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.ingest_legislation_versions
 
-eval:  ## Run the M3.4 golden-set retrieval eval, writes EVAL.md
+embed:  ## M3.1 -- populate chunks.embedding via Gemini (only new chunks; --force to redo all)
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m ingestion.embed_chunks
+
+eval:  ## Run the M3.4 golden-set retrieval + generation eval, writes EVAL.md
 	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/python -m eval.run_eval
 
 run:  ## Run the API dev server (requires `make ingest` for real data)
-	cd backend && .venv/bin/uvicorn app.main:app --reload --port 8000
+	cd backend && DATABASE_URL=$(HOST_DB_URL) .venv/bin/uvicorn app.main:app --reload --port 8000

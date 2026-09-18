@@ -45,8 +45,11 @@ async def test_zpin_reserve_resolves_a_real_dynamic_document(
     assert zpin.detail is not None
     assert zpin.detail["nom"] == "Gréngewald"
     assert zpin.document is not None
+    assert zpin.document.title is not None
     assert zpin.document.title.startswith("Règlement grand-ducal du 24 janvier 2024")
-    assert zpin.document.source_url == eli_url_to_richtext_html_url(zpin.detail["lien_legilux"])
+    lien_legilux = zpin.detail["lien_legilux"]
+    assert isinstance(lien_legilux, str)
+    assert zpin.document.source_url == eli_url_to_richtext_html_url(lien_legilux)
 
 
 async def test_two_parcels_in_the_same_reserve_share_one_document(

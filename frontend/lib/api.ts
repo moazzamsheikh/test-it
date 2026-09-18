@@ -1,6 +1,7 @@
 import type {
   AddressSearchResult,
   BuildableEnvelope,
+  ChatResponse,
   OverlayLayerInfo,
   ParcelDetail,
   ParcelIdentifyResponse,
@@ -86,6 +87,26 @@ export async function getBuildingPermitProcedure(): Promise<ProcedureDetail | nu
     throw new Error(`procedure lookup failed: HTTP ${response.status}`);
   }
   return (await response.json()) as ProcedureDetail;
+}
+
+/** M3 — grounded, parcel-scoped chat. `sessionId` is a client-generated id
+ * (kept in localStorage, see ChatPanel.tsx) so conversation memory (M3.3)
+ * survives across questions within one browser session — no auth/session
+ * concept exists elsewhere in this project, so this doesn't add one. */
+export async function sendChatMessage(
+  sessionId: string,
+  message: string,
+  cadastralId: string | null,
+): Promise<ChatResponse> {
+  const response = await fetch(`${API_BASE}/api/v1/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId, message, cadastral_id: cadastralId }),
+  });
+  if (!response.ok) {
+    throw new Error(`chat failed: HTTP ${response.status}`);
+  }
+  return (await response.json()) as ChatResponse;
 }
 
 export async function getParcelDetail(cadastralId: string): Promise<ParcelDetail | null> {

@@ -19,7 +19,7 @@ from geoalchemy2.shape import from_shape
 from shapely.affinity import affine_transform
 from shapely.geometry import MultiPolygon
 from shapely.ops import unary_union
-from sqlalchemy import create_engine, delete, func, select
+from sqlalchemy import create_engine, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -259,14 +259,35 @@ def _get_or_create_source(session: Session, *, name: str, zip_url: str) -> uuid.
 
 
 def _get_or_create_written_document(
-    session: Session, *, source_id: uuid.UUID, zip_url: str, entry_name: str, data: bytes
+    session: Session,
+    *,
+    source_id: uuid.UUID,
+    admin_commune_code: str,
+    zip_url: str,
+    entry_name: str,
+    data: bytes,
 ) -> uuid.UUID:
+    # BUG, found live while testing M3's chat retrieval (see DECISIONS.md):
+    # this never set commune_code on the Document/Chunk it creates, despite
+    # every PAG written-part regulation being genuinely commune-specific.
+    # Silent effect since M2: a Wiltz parcel's question could retrieve
+    # Luxembourg City's PAP QE written-part text and vice versa — exactly
+    # the cross-commune leakage M3.1 explicitly says must not happen.
+    # `admin_commune_code` was already available at every call site; it
+    # just wasn't threaded through.
     source_url = f"{zip_url}#{entry_name}"
     sha256 = hashlib.sha256(data).hexdigest()
     existing = session.execute(
         select(Document).where(Document.source_url == source_url, Document.sha256 == sha256)
     ).scalar_one_or_none()
     if existing is not None:
+        if existing.commune_code != admin_commune_code:
+            existing.commune_code = admin_commune_code
+            session.execute(
+                update(Chunk)
+                .where(Chunk.document_id == existing.id)
+                .values(commune_code=admin_commune_code)
+            )
         return existing.id
 
     title, text, article_ref = extract_pag_docx(data)
@@ -277,6 +298,7 @@ def _get_or_create_written_document(
         publisher="Administration du cadastre et de la topographie (ACT)",
         sha256=sha256,
         language=Language.fr,
+        commune_code=admin_commune_code,
         legal_status=LegalStatus.unknown,  # a zoning regulation, not itself an act of law
         document_type=DocumentType.pag_written,
     )
@@ -291,6 +313,7 @@ def _get_or_create_written_document(
             text=text,
             document_type=DocumentType.pag_written,
             language=Language.fr,
+            commune_code=admin_commune_code,
             legal_status=LegalStatus.unknown,
         )
     )
@@ -320,6 +343,12 @@ def _get_or_create_graphic_document(
         select(Document).where(Document.source_url == source_url, Document.sha256 == sha256)
     ).scalar_one_or_none()
     if existing is not None:
+        # Same real bug/fix as _get_or_create_written_document above — this
+        # branch used to return early without ever touching commune_code,
+        # which is why the first fix pass left every already-ingested
+        # graphic document (177/177) still null (see DECISIONS.md).
+        if existing.commune_code != admin_commune_code:
+            existing.commune_code = admin_commune_code
         return existing.id
 
     commune_dir = _GRAPHICS_DIR / admin_commune_code
@@ -334,6 +363,7 @@ def _get_or_create_graphic_document(
         publisher="Administration du cadastre et de la topographie (ACT)",
         sha256=sha256,
         language=Language.unknown,  # a map, not text
+        commune_code=admin_commune_code,
         legal_status=LegalStatus.unknown,
         document_type=DocumentType.pag_graphic,
         storage_path=str(dest),
@@ -390,7 +420,12 @@ def ingest_commune(
             continue
         data = zf.read(entry_name)
         filename_to_document_id[filename] = _get_or_create_written_document(
-            session, source_id=source_id, zip_url=zip_url, entry_name=entry_name, data=data
+            session,
+            source_id=source_id,
+            admin_commune_code=admin_commune_code,
+            zip_url=zip_url,
+            entry_name=entry_name,
+            data=data,
         )
     if missing_documents:
         logger.warning(

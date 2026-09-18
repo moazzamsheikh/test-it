@@ -28,7 +28,9 @@ async def test_water_protection_zone_resolves_a_real_dynamic_document(
 
     assert water.intersects is True
     assert water.detail is not None
-    assert water.detail["Publication du règlement grand-duca"].startswith(
+    publication_url = water.detail["Publication du règlement grand-duca"]
+    assert isinstance(publication_url, str)
+    assert publication_url.startswith(
         "http://legilux.public.lu/eli/etat/leg/rgd/2019/05/16/a342/jo"
     )
     assert water.document is not None

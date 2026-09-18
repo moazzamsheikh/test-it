@@ -159,5 +159,103 @@
     "expected_document_title_contains": null,
     "expected_article_ref": null,
     "note": "Deliberately unanswerable from this corpus — tests that retrieval returns nothing usable rather than a false-positive top hit (M3.2's explicit 'I don't have a source for that' requirement)."
+  },
+  {
+    "question": "À quelle distance minimale des limites de propriété une pompe à chaleur doit-elle être installée ?",
+    "expected_document_title_contains": "bâtisses",
+    "expected_article_ref": "Art. 15",
+    "admin_commune_code": "0202",
+    "cadastral_id": "031A00389006922",
+    "note": "Differdange building bylaw. Real, commune-exclusive fact: Dudelange's identically-titled bylaw has no heat-pump article at all (see tests/test_retrieval.py's real cross-commune-isolation test) — a title-only check can't distinguish these, so this question specifically exercises commune scoping via a real selected parcel."
+  },
+  {
+    "question": "Qui doit autoriser les travaux de démolition d'un immeuble à Dudelange ?",
+    "expected_document_title_contains": "bâtisses",
+    "expected_article_ref": "Art. 102",
+    "admin_commune_code": "0203",
+    "cadastral_id": "033B00381006255"
+  },
+  {
+    "question": "Quelle taxe doit être versée pour une demande d'autorisation prévue dans le règlement sur les bâtisses de Dudelange ?",
+    "expected_document_title_contains": "bâtisses",
+    "expected_article_ref": "Art. 101",
+    "admin_commune_code": "0203",
+    "cadastral_id": "033B00381006255"
+  },
+  {
+    "question": "Quelle est la hauteur maximale d'une clôture entre jardinets de façade à Esch-sur-Alzette ?",
+    "expected_document_title_contains": "bâtisses",
+    "expected_article_ref": "Art. 19",
+    "admin_commune_code": "0204",
+    "cadastral_id": "039A00610004635"
+  },
+  {
+    "question": "Quelles sont les règles applicables à un totem de publicité à Sanem ?",
+    "expected_document_title_contains": "bâtisses",
+    "expected_article_ref": "Art. 12",
+    "admin_commune_code": "0213",
+    "cadastral_id": "106C00787008711"
+  },
+  {
+    "question": "Qu'est-ce qui est admis dans les zones d'habitation du PAG de Differdange ?",
+    "expected_document_title_contains": "Zones d’habitation",
+    "expected_article_ref": "Art. 1",
+    "admin_commune_code": "0202",
+    "cadastral_id": "031A00389006922"
+  },
+  {
+    "question": "Que couvre la zone mixte urbaine [MIX-u] du PAG de Sanem ?",
+    "expected_document_title_contains": "Zone mixte urbaine",
+    "expected_article_ref": "Art. 3",
+    "admin_commune_code": "0213",
+    "cadastral_id": "106C00787008711"
+  },
+  {
+    "question": "How many classes exist for classified establishments in Luxembourg?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 3",
+    "note": "M3.1 multilingual: English question, French-only corpus text — tests cross-lingual retrieval, not just translation of an existing FR question."
+  },
+  {
+    "question": "What is the minimum distance a heat pump must be installed from the property line in Differdange?",
+    "expected_document_title_contains": "bâtisses",
+    "expected_article_ref": "Art. 15",
+    "admin_commune_code": "0202",
+    "cadastral_id": "031A00389006922",
+    "note": "M3.1 multilingual + M3.3 parcel-scoped, combined: an English question about a real Differdange-specific fact."
+  },
+  {
+    "question": "Wie viele Tage wird der Antrag auf Genehmigung für eine klassifizierte Anlage in der Gemeinde ausgehängt?",
+    "expected_document_title_contains": "établissements classés",
+    "expected_article_ref": "Art. 10",
+    "note": "M3.1 multilingual: German question, French-only corpus text."
+  },
+  {
+    "question": "Wat ass eng Zone mixte urbaine [MIX-u] am PAG vu Sanem?",
+    "expected_document_title_contains": "Zone mixte urbaine",
+    "expected_article_ref": "Art. 3",
+    "admin_commune_code": "0213",
+    "cadastral_id": "106C00787008711",
+    "note": "M3.1 multilingual: Luxembourgish question — a real, disclosed harder case (see app/services/embeddings.py's docstring: no LB-specific embedding support, only cross-lingual proximity to German/French and lexical exact-token matching on shared vocabulary/proper nouns like 'MIX-u' and 'Sanem')."
+  },
+  {
+    "question": "Quelle est la hauteur maximale autorisée dans la zone MIX_v de Schengen ?",
+    "expected_document_title_contains": null,
+    "expected_article_ref": null,
+    "admin_commune_code": "1206",
+    "cadastral_id": "097D00240002285",
+    "note": "Deliberately unanswerable, but a harder case than pure gibberish: a real MIX_v zone genuinely exists for this real parcel (see tests/test_report.py), but no source in this corpus states a maximum height for it (M4's own disclosed extraction gap) — tests that the system distinguishes 'no source for this specific fact' from 'no source at all', not just obviously-irrelevant queries."
+  },
+  {
+    "question": "What is the procedure for obtaining a fishing license in Luxembourg?",
+    "expected_document_title_contains": null,
+    "expected_article_ref": null,
+    "note": "Deliberately unanswerable — outside this corpus's domain entirely (fishing/hunting licensing isn't part of the ingested urban-planning/environmental corpus)."
+  },
+  {
+    "question": "Quel est le taux de TVA applicable aux travaux de rénovation énergétique d'un logement ?",
+    "expected_document_title_contains": null,
+    "expected_article_ref": null,
+    "note": "Deliberately unanswerable — a real, plausible-sounding architect question (VAT rates) that this corpus (urban planning/environmental law, not tax law) has no source for."
   }
 ]

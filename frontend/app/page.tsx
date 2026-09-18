@@ -11,6 +11,9 @@ import type { AddressSearchResult, ParcelDetail, ParcelSummary } from "@/lib/typ
 // OpenLayers touches `window`/`document` at construction time — load it only
 // on the client, never during server-side rendering.
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+// ChatPanel reads localStorage in its initial state (see its own comment)
+// — same client-only constraint as MapView, same fix.
+const ChatPanel = dynamic(() => import("@/components/ChatPanel"), { ssr: false });
 
 export default function Home() {
   const [selectedParcelId, setSelectedParcelId] = useState<string | null>(null);
@@ -19,6 +22,8 @@ export default function Home() {
   const [flyTo, setFlyTo] = useState<{ lon: number; lat: number } | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [envelopeGeojson, setEnvelopeGeojson] = useState<Record<string, unknown> | null>(null);
+  const [chatVisible, setChatVisible] = useState(true);
+  const [parcelPanelVisible, setParcelPanelVisible] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +97,26 @@ export default function Home() {
         </h1>
         <AddressSearch onSelect={handleSelectAddress} />
         <ReferenceSearch onResult={handleReferenceResult} />
+        <div className="ml-auto flex gap-2">
+          {!parcelPanelVisible && (
+            <button
+              type="button"
+              onClick={() => setParcelPanelVisible(true)}
+              className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100"
+            >
+              Show parcel details
+            </button>
+          )}
+          {!chatVisible && (
+            <button
+              type="button"
+              onClick={() => setChatVisible(true)}
+              className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100"
+            >
+              Show chat
+            </button>
+          )}
+        </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1">
@@ -102,15 +127,33 @@ export default function Home() {
             onMapClick={handleMapClick}
           />
         </main>
-        <aside className="w-96 shrink-0 border-l border-zinc-200 bg-white">
-          <ParcelPanel
-            parcel={parcelDetail}
-            candidates={candidates}
-            loading={loadingDetail}
-            onSelectCandidate={handleSelectCandidate}
-            onEnvelopeChange={setEnvelopeGeojson}
-          />
-        </aside>
+        {parcelPanelVisible && (
+          <aside className="flex w-96 shrink-0 flex-col overflow-y-auto border-l border-zinc-200 bg-white">
+            <div className="flex shrink-0 items-center justify-end border-b border-zinc-200 px-2 py-1">
+              <button
+                type="button"
+                onClick={() => setParcelPanelVisible(false)}
+                aria-label="Hide parcel details panel"
+                title="Hide parcel details panel"
+                className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+              >
+                ✕
+              </button>
+            </div>
+            <ParcelPanel
+              parcel={parcelDetail}
+              candidates={candidates}
+              loading={loadingDetail}
+              onSelectCandidate={handleSelectCandidate}
+              onEnvelopeChange={setEnvelopeGeojson}
+            />
+          </aside>
+        )}
+        {chatVisible && (
+          <aside className="w-96 shrink-0 border-l border-zinc-200 bg-white">
+            <ChatPanel cadastralId={selectedParcelId} onHide={() => setChatVisible(false)} />
+          </aside>
+        )}
       </div>
     </div>
   );

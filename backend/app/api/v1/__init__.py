@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1.addresses import router as addresses_router
+from app.api.v1.chat import router as chat_router
 from app.api.v1.documents import router as documents_router
 from app.api.v1.legislation import router as legislation_router
 from app.api.v1.overlays import router as overlays_router
@@ -12,6 +13,7 @@ from app.api.v1.sources import router as sources_router
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(addresses_router)
+router.include_router(chat_router)
 router.include_router(documents_router)
 router.include_router(legislation_router)
 router.include_router(overlays_router)

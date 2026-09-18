@@ -17,7 +17,8 @@ app = FastAPI(title="Alix — Luxembourg Parcel Intelligence Platform")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
-    allow_methods=["GET"],
+    # POST added for M3's chat endpoint (everything before it was read-only).
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 app.include_router(v1_router)

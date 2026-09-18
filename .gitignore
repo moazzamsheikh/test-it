@@ -27,6 +27,9 @@ data/
 .vscode/
 .idea/
 
+# Local Claude Code tool config, not project code
+.claude/
+
 # Python build artifacts
 *.egg-info/
 

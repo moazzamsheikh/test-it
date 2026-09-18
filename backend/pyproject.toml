@@ -29,6 +29,7 @@ dependencies = [
     "jinja2>=3.1",
     "weasyprint>=63",
     "pillow>=11",
+    "google-genai>=1.0",
 ]
 
 [project.optional-dependencies]

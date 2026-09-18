@@ -13,7 +13,6 @@ own non-negotiable rule, not a plausible-looking guess.
 
 from __future__ import annotations
 
-import re
 import uuid
 from datetime import UTC, datetime
 
@@ -21,7 +20,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.provenance import Document, Source
-from app.schemas.pag import DocumentReference
 from app.schemas.parcel import ParcelDetail
 from app.schemas.report import (
     ApplicableDocument,
@@ -32,6 +30,7 @@ from app.schemas.report import (
     ReportParcel,
     ReportZoning,
 )
+from app.services.pag_zoning import derive_pag_zone_label
 from app.services.parcels import get_parcel_detail
 
 # Exact polygon intersection against real M2 PAG data (see
@@ -156,26 +155,6 @@ _APPLICABLE_DOCUMENT_RELEVANCE = {
     "other": "Document relevant to this parcel's regulatory constraints.",
 }
 
-_ZONE_LABEL_RE = re.compile(r"Zone\s+([^\[(]+?)\s*[\[(]")
-
-
-def _derive_pag_zone_label(category: str, document: DocumentReference | None) -> str:
-    """The real written-part text starts "Art. N Zone <label> [<code>]" or
-    "Zone <label> (<code>)" — the exact delimiter is a real, genuine
-    per-commune authoring difference (verified: Luxembourg City/Wiltz use
-    square brackets, Schengen uses parentheses, one document uses
-    guillemets around a different wording entirely) — not something to
-    force into one exact format. Extracted from the document text itself
-    rather than a second, separately-drifting static code->label lookup.
-    Falls back to the raw code when no document text is available, or the
-    real title doesn't match either delimiter (an honest, already-known
-    gap — see DECISIONS.md)."""
-    if document is not None and document.text:
-        match = _ZONE_LABEL_RE.search(document.text)
-        if match:
-            return match.group(1).strip()
-    return category
-
 
 def _summarize_detail(detail: dict[str, object] | None) -> str | None:
     if not detail:
@@ -277,7 +256,7 @@ async def build_parcel_report(session: AsyncSession, cadastral_id: str) -> Parce
     zoning = ReportZoning(
         pag_zone=pag_zone.category if pag_zone else None,
         pag_zone_label=(
-            _derive_pag_zone_label(pag_zone.category, pag_zone.document) if pag_zone else None
+            derive_pag_zone_label(pag_zone.category, pag_zone.document) if pag_zone else None
         ),
         pag_document_url=(pag_zone.document.source_url if pag_zone and pag_zone.document else None),
         pap_type=pap_type,

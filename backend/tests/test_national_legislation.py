@@ -40,6 +40,7 @@ async def test_acdu_2004_is_the_real_consolidated_text(async_db_session: AsyncSe
         )
     ).scalar_one_or_none()
     assert document is not None
+    assert document.title is not None
     assert document.title.startswith("Version consolidée")
 
     chunks = (

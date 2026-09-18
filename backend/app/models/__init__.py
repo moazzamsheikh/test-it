@@ -11,9 +11,10 @@ from app.models.cadastre import (
     ParcelBuilding,
     ParcelNature,
 )
+from app.models.chat import ChatMessage
 from app.models.overlays import ParcelOverlayResult
 from app.models.pag import PagZone, PapNqZone, PapQeZone
-from app.models.provenance import Chunk, Document, Source
+from app.models.provenance import Chunk, Document, LegislationVersion, Source
 from app.models.slope import ParcelSlopeResult
 
 __all__ = [
@@ -22,9 +23,11 @@ __all__ = [
     "BuildingNature",
     "CadastralCommune",
     "CadastralSection",
+    "ChatMessage",
     "Chunk",
     "Commune",
     "Document",
+    "LegislationVersion",
     "PagZone",
     "PapNqZone",
     "PapQeZone",
