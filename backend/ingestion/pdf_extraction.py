@@ -1,20 +1,26 @@
 """Real text extraction from PDF building bylaws (règlements sur les
-bâtisses) — M2.3's PDF requirement. Every real bylaw PDF checked so far
-(8 communes) has real, embedded (non-scanned) text — `pypdf` extracts it
-directly; no OCR fallback was needed for any of them, so none is built
-(a real, disclosed scope limit: a genuinely scanned bylaw PDF would need
-Tesseract, not attempted here — see DECISIONS.md).
+bâtisses) — M2.3's PDF requirement.
+
+Embedded text is extracted with ``pypdf``. Pages whose extracted text is
+empty or implausibly sparse are rendered and sent to Tesseract instead;
+ordinary text PDFs never invoke OCR. OCR is deliberately page-scoped so a
+mixed PDF keeps its embedded text and only pays the OCR cost for scanned
+pages.
 """
 
 from __future__ import annotations
 
 import re
+from typing import Any, cast
 
 from pypdf import PdfReader
 
 _ARTICLE_SPLIT_RE = re.compile(r"(?=\nArt\.?\s*\d+\w*[.\s])")
 _ARTICLE_REF_RE = re.compile(r"^Art\.?\s*(\d+\w*)")
 _MIN_ARTICLE_CHARS = 80
+_MIN_PAGE_TEXT_CHARS = 40
+_OCR_SCALE = 300 / 72
+_OCR_LANGUAGES = "fra+deu+eng"
 # A table-of-contents entry ("Art. 2 Objet ..................... 5") is a
 # real, common false split — it starts with a real "Art. N" heading too,
 # but is dominated by dot-leader characters rather than substantive text.
@@ -31,6 +37,27 @@ class PdfArticle:
         self.text = text
 
 
+def _page_needs_ocr(text: str) -> bool:
+    """Detect scanned or unusably sparse pages without OCR-ing all PDFs."""
+    alphanumeric_count = sum(character.isalnum() for character in text)
+    return alphanumeric_count < _MIN_PAGE_TEXT_CHARS
+
+
+def _ocr_page(page: Any) -> str:
+    """Render one PDF page and OCR it using the configured legal languages."""
+    try:
+        import pytesseract
+    except ImportError as exc:
+        raise RuntimeError(
+            "OCR is required for a sparse PDF page, but pypdfium2 and pytesseract "
+            "are not installed"
+        ) from exc
+
+    bitmap = page.render(scale=_OCR_SCALE)
+    image = bitmap.to_pil()
+    return cast(str, pytesseract.image_to_string(image, lang=_OCR_LANGUAGES))
+
+
 def extract_pdf_bylaw(pdf_path: str) -> tuple[str, list[PdfArticle]]:
     """Returns (title, articles). Title is the first non-blank line of the
     first page (every real bylaw checked puts its own name there). Splits
@@ -39,7 +66,25 @@ def extract_pdf_bylaw(pdf_path: str) -> tuple[str, list[PdfArticle]]:
     length rather than trying to detect "is this really a TOC" — real
     articles are substantive, TOC entries are one line."""
     reader = PdfReader(pdf_path)
-    full_text = "\n".join(page.extract_text() for page in reader.pages)
+    page_texts = []
+    sparse_page_numbers = []
+    for page_number, page in enumerate(reader.pages):
+        text = page.extract_text() or ""
+        if _page_needs_ocr(text):
+            sparse_page_numbers.append(page_number)
+        page_texts.append(text)
+
+    if sparse_page_numbers:
+        try:
+            import pypdfium2 as pdfium
+        except ImportError as exc:
+            raise RuntimeError(
+                "OCR is required for sparse PDF pages, but pypdfium2 is not installed"
+            ) from exc
+        rendered_document = pdfium.PdfDocument(pdf_path)
+        for page_number in sparse_page_numbers:
+            page_texts[page_number] = _ocr_page(rendered_document[page_number])
+    full_text = "\n".join(page_texts)
 
     title = ""
     for line in full_text.splitlines():

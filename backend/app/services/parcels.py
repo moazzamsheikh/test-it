@@ -51,7 +51,7 @@ def _parcel_summary_query() -> Select[Any]:
         .outerjoin(Commune, Commune.lau2_code == Parcel.admin_commune_code)
     )
 
-
+# MAP
 async def identify_by_point(session: AsyncSession, lon: float, lat: float) -> list[ParcelSummary]:
     """Click-to-identify: (lon, lat) in WGS84, transformed to LUREF server-side
     (source geometry is 2169; browser input is 4326 — see DECISIONS.md).

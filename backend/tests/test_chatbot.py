@@ -216,6 +216,25 @@ async def test_geospatial_facts_have_distinct_meaningful_titles(
     assert all(t.startswith("Geospatial data — ") for t in titles)
 
 
+async def test_pag_zone_fact_includes_the_real_human_readable_label(
+    async_db_session: AsyncSession,
+) -> None:
+    """Real user-reported gap: the PAG zone fact used to cite only the raw
+    category code ("PAG zone 'FOR'"), leaving a user with no way to know
+    what "FOR" actually means. Reuses the same real label extraction M4's
+    report already relies on (app/services/pag_zoning.py::derive_pag_zone_label)
+    rather than a second, separately-drifting lookup — 075F00184002448 is a
+    real, independently-verified FOR (forestière) zone (see DECISIONS.md)."""
+    parcel = await get_parcel_detail(async_db_session, "075F00184002448")
+    assert parcel is not None
+
+    facts = _geospatial_facts(parcel)
+
+    pag_fact = next(f for f in facts if f.document_title.startswith("Geospatial data — PAG zone"))
+    assert "forestière" in pag_fact.document_title
+    assert "forestière" in pag_fact.prompt_text
+
+
 async def test_conversation_memory_persists_across_turns(async_db_session: AsyncSession) -> None:
     session_id = f"test-{uuid.uuid4()}"
     unique_term = f"zorbaflex{uuid.uuid4().hex[:8]}"

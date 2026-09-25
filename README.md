@@ -63,7 +63,14 @@ with citations to official sources.
 
 **Prerequisites:** Docker + Docker Compose, Python 3.11+ (for running
 migrations/ingestion/the API from the host — a containerised backend service
-lands later), and Node.js 20+ for the frontend.
+lands later), Node.js 20+ for the frontend, and Tesseract OCR with the
+French, German, and English language packs for scanned PDF ingestion.
+
+On macOS, install the OCR runtime with:
+
+```bash
+brew install tesseract tesseract-lang
+```
 
 ```bash
 # 1. Configure environment

@@ -14,11 +14,14 @@ import uuid
 from typing import Any
 from xml.etree import ElementTree as ET
 
+import httpx
 import structlog
 from geoalchemy2.shape import from_shape
+from pyproj import Transformer
+from shapely import force_2d
 from shapely.affinity import affine_transform
-from shapely.geometry import MultiPolygon
-from shapely.ops import unary_union
+from shapely.geometry import MultiPolygon, Polygon, shape
+from shapely.ops import transform, unary_union
 from sqlalchemy import create_engine, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -29,7 +32,13 @@ from app.models.cadastre import Commune, Parcel
 from app.models.enums import AccessMethod, DocumentType, Language, LegalStatus, SourceStatus
 from app.models.pag import PagZone, PapNqZone, PapQeZone
 from app.models.provenance import Chunk, Document, Source
-from ingestion.config import CACHE_DIR, PAG_ZIP_URLS, USER_AGENT
+from ingestion.config import (
+    CACHE_DIR,
+    PAG_LIVE_COMMUNE_CODES,
+    PAG_LIVE_ZONAGE_URL,
+    PAG_ZIP_URLS,
+    USER_AGENT,
+)
 from ingestion.gml_geometry import parse_gml_polygon
 from ingestion.pag_document_extraction import extract_pag_docx
 from ingestion.remote_zip import open_remote_zip
@@ -184,6 +193,44 @@ def _parse_nq_pap(root: ET.Element) -> list[_NqPapFeature]:
     return features
 
 
+def _fetch_live_zonage(admin_commune_code: str) -> list[_ZonageFeature]:
+    """Fetch a target commune's current ACT ZONAGE vector collection."""
+    transformer = Transformer.from_crs(4326, 2169, always_xy=True)
+    features: list[_ZonageFeature] = []
+    url: str | None = PAG_LIVE_ZONAGE_URL
+    params: dict[str, int | str] | None = {
+        "limit": 1000,
+        "filter": f"code_com='{PAG_LIVE_COMMUNE_CODES[admin_commune_code]}'",
+        "filter-lang": "cql-text",
+    }
+    with httpx.Client(headers={"User-Agent": USER_AGENT}, timeout=60.0) as client:
+        while url is not None:
+            response = client.get(url, params=params)
+            response.raise_for_status()
+            payload = response.json()
+            for feature in payload.get("features", []):
+                properties = feature.get("properties", {})
+                geometry = force_2d(transform(transformer.transform, shape(feature["geometry"])))
+                if isinstance(geometry, Polygon):
+                    geometry = MultiPolygon([geometry])
+                if not isinstance(geometry, MultiPolygon):
+                    raise ValueError(f"unexpected live PAG geometry: {geometry.geom_type}")
+                features.append(
+                    _ZonageFeature(
+                        category=properties.get("categorie"),
+                        genre=properties.get("genre"),
+                        nom_fichier=properties.get("nom_fichier"),
+                        geom=geometry,
+                    )
+                )
+            url = next(
+                (link["href"] for link in payload.get("links", []) if link.get("rel") == "next"),
+                None,
+            )
+            params = None
+    return features
+
+
 def _swap_xy(geom: MultiPolygon) -> MultiPolygon:
     return affine_transform(geom, [0, 1, 1, 0, 0, 0])
 
@@ -237,7 +284,10 @@ def _get_or_create_source(session: Session, *, name: str, zip_url: str) -> uuid.
         insert(Source)
         .values(
             name=name,
-            description="ACT's real per-commune PAG open-data bundle (GML + DOCX + PDF).",
+            description=(
+                "ACT's real per-commune PAG open data; Luxembourg City base zones "
+                "come from the live Geoportail OGC API, with PAP documents from the bundle."
+            ),
             source_url=zip_url,
             access_method=AccessMethod.bulk,
             publisher="Administration du cadastre et de la topographie (ACT)",
@@ -383,7 +433,11 @@ def ingest_commune(
     gml_bytes = zf.read(gml_names[0])
     root = ET.fromstring(gml_bytes)
 
-    zonage_features = _parse_zonage(root)
+    zonage_features = (
+        _fetch_live_zonage(admin_commune_code)
+        if admin_commune_code in PAG_LIVE_COMMUNE_CODES
+        else _parse_zonage(root)
+    )
     qe_features = _parse_zones_qe(root)
     nq_features = _parse_nq_pap(root)
     logger.info(
@@ -473,7 +527,11 @@ def ingest_commune(
             "genre": f.genre,
             "written_document_id": filename_to_document_id.get(f.nom_fichier or ""),
             "geom": from_shape(f.geom, srid=2169),
-            "source_url": zip_url,
+            "source_url": (
+                PAG_LIVE_ZONAGE_URL
+                if admin_commune_code in PAG_LIVE_COMMUNE_CODES
+                else zip_url
+            ),
         }
         for f in zonage_features
         if f.category is not None

@@ -125,13 +125,27 @@ export default function ParcelPanel({
         {parcel.buildings.length === 0 ? (
           <p className="text-sm text-zinc-500">No buildings on this parcel.</p>
         ) : (
-          <ul className="text-sm text-zinc-600">
-            {parcel.buildings.map((b) => (
-              <li key={b.id}>
-                {b.occupation_label ?? "unknown type"} — {b.overlap_m2.toFixed(1)} m² on this parcel
-              </li>
-            ))}
-          </ul>
+          <>
+            <table className="mt-1 w-full text-left text-xs text-zinc-600">
+              <thead className="text-[11px] text-zinc-400">
+                <tr>
+                  <th className="py-1 pr-2 font-medium">Use</th>
+                  <th className="py-1 text-right font-medium">Overlap</th>
+                </tr>
+              </thead>
+              <tbody>
+                {parcel.buildings.map((b) => (
+                  <tr key={b.id} className="border-t border-zinc-100">
+                    <td className="py-1 pr-2">{b.occupation_label ?? "unknown type"}</td>
+                    <td className="py-1 text-right">{b.overlap_m2.toFixed(1)} m²</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Floors and physical height are not present in the cadastral building source.
+            </p>
+          </>
         )}
       </div>
 
@@ -541,32 +555,40 @@ function PagZoningSection({ pagZoning }: { pagZoning: PagZoningInfo }) {
           <div className="mt-1 text-xs text-zinc-500">
             {zone.overlap_m2.toFixed(1)} m² overlap
           </div>
-          <dl className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-zinc-700">
-            {formatMinMax(zone.cos_min, zone.cos_max) && (
-              <>
-                <dt className="text-zinc-500">COS (footprint ratio)</dt>
-                <dd>{formatMinMax(zone.cos_min, zone.cos_max)}</dd>
-              </>
-            )}
-            {formatMinMax(zone.cus_min, zone.cus_max) && (
-              <>
-                <dt className="text-zinc-500">CUS (floor area ratio)</dt>
-                <dd>{formatMinMax(zone.cus_min, zone.cus_max)}</dd>
-              </>
-            )}
-            {zone.css_max !== null && (
-              <>
-                <dt className="text-zinc-500">CSS max (soil sealing)</dt>
-                <dd>{zone.css_max}</dd>
-              </>
-            )}
-            {formatMinMax(zone.dl_min, zone.dl_max) && (
-              <>
-                <dt className="text-zinc-500">DL (units/ha)</dt>
-                <dd>{formatMinMax(zone.dl_min, zone.dl_max)}</dd>
-              </>
-            )}
-          </dl>
+          <table className="mt-1 w-full text-left text-xs text-zinc-700">
+            <thead className="text-[11px] text-zinc-500">
+              <tr>
+                <th className="py-1 pr-2 font-medium">Constraint</th>
+                <th className="py-1 text-right font-medium">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {formatMinMax(zone.cos_min, zone.cos_max) && (
+                <tr className="border-t border-green-100">
+                  <td className="py-1 pr-2">COS (footprint ratio)</td>
+                  <td className="py-1 text-right">{formatMinMax(zone.cos_min, zone.cos_max)}</td>
+                </tr>
+              )}
+              {formatMinMax(zone.cus_min, zone.cus_max) && (
+                <tr className="border-t border-green-100">
+                  <td className="py-1 pr-2">CUS (floor area ratio)</td>
+                  <td className="py-1 text-right">{formatMinMax(zone.cus_min, zone.cus_max)}</td>
+                </tr>
+              )}
+              {zone.css_max !== null && (
+                <tr className="border-t border-green-100">
+                  <td className="py-1 pr-2">CSS max (soil sealing)</td>
+                  <td className="py-1 text-right">{zone.css_max}</td>
+                </tr>
+              )}
+              {formatMinMax(zone.dl_min, zone.dl_max) && (
+                <tr className="border-t border-green-100">
+                  <td className="py-1 pr-2">DL (units/ha)</td>
+                  <td className="py-1 text-right">{formatMinMax(zone.dl_min, zone.dl_max)}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
           {zone.written_document && (
             <details className="mt-1">
               <summary className="cursor-pointer text-xs text-green-800">

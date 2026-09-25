@@ -56,6 +56,7 @@ async def search_addresses(
     # Same normalization the stored column uses (unaccent + lower), computed
     # in SQL rather than reimplemented in Python, so it can never drift from
     # what street_name_normalized actually contains.
+    #Normalize the query in SQL using unaccent and lower functions, and compute similarity score with the normalized street name in the database.
     normalized_query = func.unaccent_immutable(func.lower(expanded))
     score = func.similarity(Address.street_name_normalized, normalized_query)
 

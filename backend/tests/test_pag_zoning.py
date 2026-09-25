@@ -22,37 +22,78 @@ async def _parcel_id(session: AsyncSession, cadastral_id: str) -> uuid.UUID:
     ).scalar_one()
 
 
-async def test_real_parcel_resolves_to_its_real_pag_zone(async_db_session: AsyncSession) -> None:
-    """075F00184002448 ("8 Rue Beck") was independently verified (Nominatim,
-    live WMS imagery, and the real Art.19 legal text) to genuinely fall
-    within a "FOR" (zone forestière) polygon — a real, surprising result
-    from real data, reported as-is rather than second-guessed. See
-    DECISIONS.md for the full investigation."""
+async def test_real_parcel_resolves_to_its_current_pag_zone(
+    async_db_session: AsyncSession,
+) -> None:
+    """075F00184002448 ("8 Rue Beck") resolves against ACT's current live
+    PAG vector source, rather than the stale downloadable ZIP."""
     parcel_id = await _parcel_id(async_db_session, "075F00184002448")
     zoning = await get_pag_zoning(async_db_session, parcel_id)
 
     assert len(zoning.pag_zones) == 1
     match = zoning.pag_zones[0]
-    assert match.category == "FOR"
+    assert match.category == "MIX_u"
     assert match.overlap_m2 > 0
     assert match.document is not None
-    assert match.document.article_ref == "Art. 19"
+    assert match.document.article_ref == "Art. 5"
     assert match.document.text is not None
-    assert "forestière" in match.document.text.lower()
+    assert "mixte urbaine" in match.document.text.lower()
 
 
-async def test_parcel_with_no_pag_coverage_returns_an_empty_list(
+async def test_live_city_parcel_resolves_to_hab1_zone(async_db_session: AsyncSession) -> None:
+    """075C00163000437 (38 Rue de Trèves) is shown as HAB-1 by ACT's
+    current live PAG map; the assertion prevents a stale bulk publication from
+    reintroducing the old FOR classification (see DECISIONS.md)."""
+    parcel_id = await _parcel_id(async_db_session, "075C00163000437")
+    zoning = await get_pag_zoning(async_db_session, parcel_id)
+
+    assert len(zoning.pag_zones) == 1
+    assert zoning.pag_zones[0].category == "HAB_1"
+    assert zoning.pag_zones[0].overlap_m2 > 0
+    assert zoning.pag_zones[0].document is not None
+    assert zoning.pag_zones[0].document.article_ref == "Art. 1"
+
+
+async def test_live_junglinster_parcel_resolves_to_hab2_zone(
     async_db_session: AsyncSession,
 ) -> None:
-    """054A00396005426 falls in a real, confirmed gap in the downloadable
-    PAG bulk export (verified via the live WMS image showing real zoning
-    there that this dataset doesn't include — see DECISIONS.md) — an empty
-    list is the honest result, not an error or a fabricated zone."""
+    """064B01784009471 (1 Rue Rham) resolves to HAB-2 in ACT's current
+    live C027 PAG data, rather than the stale bulk result."""
+    parcel_id = await _parcel_id(async_db_session, "064B01784009471")
+    zoning = await get_pag_zoning(async_db_session, parcel_id)
+
+    hab_zones = [zone for zone in zoning.pag_zones if zone.category == "HAB_2"]
+    assert len(hab_zones) == 1
+    assert hab_zones[0].overlap_m2 > 0
+    assert hab_zones[0].document is not None
+    assert hab_zones[0].document.article_ref == "Art. 2"
+
+
+async def test_live_wiltz_parcel_resolves_to_hab1_zone(
+    async_db_session: AsyncSession,
+) -> None:
+    """127B01405004232 (1 An der Kaul) resolves to HAB-1 in ACT's current
+    live C023 PAG data."""
+    parcel_id = await _parcel_id(async_db_session, "127B01405004232")
+    zoning = await get_pag_zoning(async_db_session, parcel_id)
+
+    hab_zones = [zone for zone in zoning.pag_zones if zone.category == "HAB_1"]
+    assert len(hab_zones) == 1
+    assert hab_zones[0].overlap_m2 > 0
+    assert hab_zones[0].document is not None
+    assert hab_zones[0].document.article_ref == "Art. 3"
+
+
+async def test_live_pag_source_fills_former_bulk_export_coverage_gap(
+    async_db_session: AsyncSession,
+) -> None:
+    """054A00396005426 is covered by current live PAG data even though the
+    older downloadable export returned no zone."""
     parcel_id = await _parcel_id(async_db_session, "054A00396005426")
     zoning = await get_pag_zoning(async_db_session, parcel_id)
 
-    assert zoning.pag_zones == []
-    assert zoning.pap_qe_zones == []
+    assert {zone.category for zone in zoning.pag_zones} == {"AGR", "VERD"}
+    assert all(zone.overlap_m2 > 0 for zone in zoning.pag_zones)
 
 
 async def test_real_parcel_resolves_real_nq_pap_coefficients(
@@ -78,24 +119,17 @@ async def test_real_parcel_resolves_real_nq_pap_coefficients(
     assert "plan d’aménagement" in match.written_document.text.lower()
 
 
-async def test_real_pap_qe_zone_resolves_its_real_graphic_map_document(
+async def test_live_schengen_parcel_resolves_current_pag_zone(
     async_db_session: AsyncSession,
 ) -> None:
-    """097D00240002285 (Schengen) falls in a real ZONES_QE polygon whose
-    NOM_FICHIER_GR graphic-part PDF was actually fetched from the source
-    ZIP and stored locally (not just a filename reference) — see
-    ingestion/ingest_pag_zones.py and DECISIONS.md."""
+    """097D00240002285 (Schengen) resolves against the current live PAG
+    vector source; the older ZIP's PAP-QE overlap is no longer present."""
     parcel_id = await _parcel_id(async_db_session, "097D00240002285")
     zoning = await get_pag_zoning(async_db_session, parcel_id)
 
-    assert len(zoning.pap_qe_zones) >= 1
-    match = zoning.pap_qe_zones[0]
-    assert match.graphic_document_filename == "113_QE_Schengen"
-    assert match.graphic_document is not None
-    assert match.graphic_document.document_id is not None
-    # A real map PDF has no useful text to extract — unlike a written
-    # regulation's DocumentReference, `text` is genuinely null here.
-    assert match.graphic_document.text is None
+    assert len(zoning.pag_zones) == 1
+    assert zoning.pag_zones[0].category == "MIX_v"
+    assert zoning.pag_zones[0].overlap_m2 > 0
 
 
 async def test_pag_written_and_graphic_documents_all_carry_a_commune_code(

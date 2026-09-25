@@ -49,6 +49,7 @@ export default function Home() {
     };
   }, [selectedParcelId]);
 
+ // Click Map to identify a parcel. If multiple parcels are returned, let the user pick one.
   async function handleMapClick(lon: number, lat: number) {
     const { parcels } = await identifyParcel(lon, lat);
     if (parcels.length === 1) {
